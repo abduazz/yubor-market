@@ -1,0 +1,353 @@
+<?php
+
+/*
+ | Statik (frontend uchun) ma'lumotlar. Backend ulanganda shu yerdagi
+ | massivlar API/DB ma'lumotlari bilan almashtiriladi.
+ */
+
+return [
+
+    // demo_count — bosh sahifada bo'limda nechta karta bo'lishi (frontend demo uchun
+    // mavjud tovarlar takrorlanadi). Backend ulanganda haqiqiy tovarlar soni ishlatiladi.
+    'categories' => [
+        ['slug' => 'telefonlar', 'title' => 'Telefonlar', 'section' => 'Telefonlar', 'demo_count' => 10],
+        ['slug' => 'maishiy-texnika', 'title' => 'Maishiy texnika', 'section' => 'Maishiy texnikalar', 'demo_count' => 7],
+        ['slug' => 'bolalar-uchun', 'title' => 'Bolalar uchun', 'section' => 'Bolalar uchun', 'demo_count' => 4],
+    ],
+
+    // Bosh sahifa bannerlari (avtomatik aylanadi). 1-banner — Figma'dagi asl banner.
+    'banners' => [
+        [
+            'title' => 'Farzandlarni<br>Quvontiring',
+            'subtitle' => 'Komissiyasiz va yaxshi kursda',
+            'gradient' => 'linear-gradient(-86.83deg, rgb(129, 172, 245) 0.46%, rgb(51, 152, 236) 99%)',
+            'image' => 'img/teddy.png',
+            // Figma'dagi joylashuv: 162×170, 6° burilgan, pastdan chiqib turadi
+            'image_class' => 'top-[2px] right-[2px] h-[170px] w-[163px] rotate-6',
+            'url' => '/category/bolalar-uchun',
+        ],
+        [
+            'title' => 'Ota-onangizga<br>yangi telefon',
+            'subtitle' => 'Rasmiy kafolat va bepul yetkazish',
+            'gradient' => 'linear-gradient(-86.83deg, rgb(146, 132, 250) 0.46%, rgb(92, 84, 232) 99%)',
+            'subtitle_color' => '#e4e0ff',
+            'image' => 'img/cat-phones.png',
+            'image_class' => 'top-[16px] right-[4px] h-[150px] w-[150px] -rotate-6',
+            'url' => '/category/telefonlar',
+        ],
+        [
+            'title' => 'Uyga qulaylik<br>sovg‘a qiling',
+            'subtitle' => 'Maishiy texnika 2–4 kunda yetadi',
+            'gradient' => 'linear-gradient(-86.83deg, rgb(94, 214, 170) 0.46%, rgb(18, 167, 120) 99%)',
+            'subtitle_color' => '#d7f7ea',
+            'image' => 'img/cat-appl2.png',
+            'image_class' => 'top-[10px] right-[26px] h-[160px] w-[120px]',
+            'url' => '/category/maishiy-texnika',
+        ],
+    ],
+
+    'products' => [
+        [
+            'slug' => 'galaxy-a55',
+            'category' => 'telefonlar',
+            'price' => '32 990 ₽',
+            'title' => 'Smartfon Galaxy A55 5G, 8/256 GB',
+            'full_title' => 'Smartfon Galaxy A55 5G, 8/256 GB, ko‘k',
+            'brand' => 'Samsung',
+            'image' => 'img/phone-blue.png',
+            'gallery' => 'img/gallery-a55.png',
+            // Figma: "20 · Tovar — rasm galereyasi" (6 ta rasm)
+            'images' => [
+                'img/gallery-a55.png', 'img/a55-2.jpg', 'img/a55-3.jpg',
+                'img/gallery-a55.png', 'img/a55-2.jpg', 'img/a55-3.jpg',
+            ],
+            // Figma: "18 · Tovar — barcha xususiyatlar"
+            'spec_groups' => [
+                'Asosiy' => [
+                    'Brend' => 'Samsung',
+                    'Model' => 'Galaxy A55 5G',
+                    'Rang' => 'Ko‘k',
+                    'Kafolat' => '12 oy, rasmiy',
+                ],
+                'Ekran' => [
+                    'Diagonal' => '6.6"',
+                    'Turi' => 'Super AMOLED',
+                    'Yangilanish' => '120 Hz',
+                    'Ruxsat' => '2340 × 1080',
+                ],
+                'Xotira va protsessor' => [
+                    'Operativ xotira' => '8 GB',
+                    'Ichki xotira' => '256 GB',
+                    'Protsessor' => 'Exynos 1480',
+                    'Xotira kartasi' => 'microSD, 1 TB gacha',
+                ],
+                'Kamera' => [
+                    'Asosiy' => '50 + 12 + 5 MP',
+                    'Old kamera' => '32 MP',
+                    'Video' => '4K, 30 kadr/s',
+                ],
+                'Batareya va aloqa' => [
+                    'Sig‘im' => '5000 mAh',
+                    'Quvvatlash' => '25 Vt, USB-C',
+                    'SIM' => '2 ta (nano + eSIM)',
+                    'Tarmoq' => '5G, Wi-Fi 6, NFC',
+                ],
+                'Qadoq' => [
+                    'To‘plamda' => 'Telefon, kabel, skrepka',
+                    'O‘lcham' => '161 × 77 × 8.2 mm',
+                    'Og‘irlik' => '213 g',
+                ],
+            ],
+        ],
+        [
+            'slug' => 'iphone-15',
+            'category' => 'telefonlar',
+            'price' => '69 990 ₽',
+            'title' => 'Smartfon iPhone 15, 128 GB, pushti',
+            'full_title' => 'Smartfon iPhone 15, 128 GB, pushti',
+            'brand' => 'Apple',
+            'image' => 'img/phone-pink.png',
+            'gallery' => 'img/phone-pink.png',
+            'images' => ['img/a55-3.jpg', 'img/phone-pink.png', 'img/a55-3.jpg', 'img/phone-pink.png'],
+            'specs' => [
+                'Ekran' => '6.1" Super Retina XDR',
+                'Protsessor' => 'A16 Bionic',
+                'Xotira' => '6 GB / 128 GB',
+                'Kamera' => '48 + 12 MP',
+                'Batareya' => '3349 mAh, 20 Vt',
+                'SIM' => '2 ta (nano + eSIM)',
+            ],
+            'description' => 'iPhone 15 — Dynamic Island, 48 MP asosiy kamera va USB-C ulagichi. Yengil alyumin korpus va kun bo‘yi yetadigan batareya — yaqinlaringiz uchun ishonchli sovg‘a.',
+        ],
+
+        // Maishiy texnika
+        [
+            'slug' => 'artel-muzlatgich-345',
+            'category' => 'maishiy-texnika',
+            'price' => '38 990 ₽',
+            'title' => 'Muzlatgich Artel HD 345 L, kumush',
+            'full_title' => 'Muzlatgich Artel HD 345 L, No Frost, kumush',
+            'brand' => 'Artel',
+            'image' => 'img/cat-appl2.png',
+            'gallery' => 'img/thumb-2.png',
+            'images' => ['img/thumb-2.png', 'img/cat-appl2.png'],
+            'specs' => [
+                'Hajmi' => '345 L (240 + 105)',
+                'Tizim' => 'Full No Frost',
+                'Energiya klassi' => 'A+',
+                'O‘lchami' => '60 × 65 × 186 sm',
+                'Shovqin' => '39 dB',
+                'Kafolat' => '3 yil',
+            ],
+            'description' => 'Artel HD 345 — ikki kamerali, No Frost tizimli muzlatgich. Muz qatlami hosil bo‘lmaydi, mahsulotlar uzoq yangi saqlanadi. Elektr energiyasini tejaydi va deyarli ovozsiz ishlaydi.',
+        ],
+        [
+            'slug' => 'multivarka-artel-5l',
+            'category' => 'maishiy-texnika',
+            'price' => '6 490 ₽',
+            'title' => 'Multivarka-bosimli qozon Artel, 5 L',
+            'full_title' => 'Multivarka-bosimli qozon Artel MPC-5, 5 L, 900 Vt',
+            'brand' => 'Artel',
+            'image' => 'img/cat-appl1.png',
+            'gallery' => 'img/cat-appl1.png',
+            'images' => ['img/cat-appl1.png'],
+            'specs' => [
+                'Hajmi' => '5 L',
+                'Quvvati' => '900 Vt',
+                'Dasturlar' => '14 ta',
+                'Bosim rejimi' => 'Bor',
+                'Ichki idish' => 'Yopishmaydigan qoplama',
+                'Kafolat' => '1 yil',
+            ],
+            'description' => 'Palov, sho‘rva, manti va bo‘tqalarni bir tugma bilan tayyorlaydi. Bosim rejimi ovqatni 2 barobar tez pishiradi — oilangiz vaqtini tejaydi.',
+        ],
+
+        // Bolalar uchun
+        [
+            'slug' => 'ayiqcha-80',
+            'category' => 'bolalar-uchun',
+            'price' => '2 490 ₽',
+            'title' => 'Yumshoq ayiqcha, 80 sm, qizil lentali',
+            'full_title' => 'Yumshoq o‘yinchoq ayiqcha, 80 sm, qizil lentali',
+            'brand' => 'Toy Land',
+            'image' => 'img/teddy.png',
+            'gallery' => 'img/thumb-3.png',
+            'images' => ['img/thumb-3.png', 'img/teddy.png'],
+            'specs' => [
+                'Balandligi' => '80 sm',
+                'Material' => 'Gipoallergen plyush',
+                'To‘ldirgich' => 'Sintepon',
+                'Yosh' => '3 yoshdan',
+                'Yuvish' => '30 °C da',
+                'Sertifikat' => 'EAC',
+            ],
+            'description' => 'Katta, yumshoq va quchoqlashga qulay ayiqcha. Gipoallergen materialdan tikilgan, bolalar uchun xavfsiz. Tug‘ilgan kun uchun eng yoqimli sovg‘a.',
+        ],
+        [
+            'slug' => 'ayiqcha-120',
+            'category' => 'bolalar-uchun',
+            'price' => '3 990 ₽',
+            'title' => 'Yumshoq ayiqcha, 120 sm, katta',
+            'full_title' => 'Yumshoq o‘yinchoq ayiqcha, 120 sm, katta, qizil lentali',
+            'brand' => 'Toy Land',
+            'image' => 'img/teddy.png',
+            'gallery' => 'img/thumb-3.png',
+            'images' => ['img/thumb-3.png', 'img/teddy.png'],
+            'specs' => [
+                'Balandligi' => '120 sm',
+                'Material' => 'Gipoallergen plyush',
+                'To‘ldirgich' => 'Sintepon',
+                'Yosh' => '3 yoshdan',
+                'Yuvish' => '30 °C da',
+                'Sertifikat' => 'EAC',
+            ],
+            'description' => 'Bolangiz bo‘yidek keladigan ulkan ayiqcha. Yumshoq plyush va mustahkam choklar — yillar davomida sevimli o‘yinchoq bo‘lib qoladi.',
+        ],
+    ],
+
+    // Standart xususiyatlar (tovarda 'specs' bo'lmasa)
+    'specs' => [
+        'Ekran' => '6.6" Super AMOLED, 120 Hz',
+        'Protsessor' => 'Exynos 1480',
+        'Xotira' => '8 GB / 256 GB',
+        'Kamera' => '50 + 12 + 5 MP',
+        'Batareya' => '5000 mAh, 25 Vt',
+        'SIM' => '2 ta (nano + eSIM)',
+    ],
+
+    'regions' => [
+        'Samarqand', 'Toshkent shahri', 'Toshkent viloyati', 'Andijon', 'Farg‘ona',
+        'Namangan', 'Buxoro', 'Qashqadaryo', 'Surxondaryo', 'Jizzax', 'Sirdaryo',
+        'Navoiy', 'Xorazm', 'Qoraqalpog‘iston',
+    ],
+
+    'districts' => [
+        'Farg‘ona' => [
+            'Farg‘ona shahri', 'Marg‘ilon shahri', 'Qo‘qon shahri', 'Quvasoy shahri',
+            'Oltiariq tumani', 'Bag‘dod tumani', 'Rishton tumani', 'Toshloq tumani',
+        ],
+        'Toshkent shahri' => [
+            'Yunusobod', 'Chilonzor', 'Mirzo Ulug‘bek', 'Yakkasaroy', 'Shayxontohur',
+            'Olmazor', 'Sergeli', 'Mirobod', 'Uchtepa', 'Bektemir', 'Yashnobod', 'Yangihayot',
+        ],
+        'Samarqand' => [
+            'Samarqand shahri', 'Kattaqo‘rg‘on shahri', 'Urgut tumani', 'Pastdarg‘om tumani',
+            'Jomboy tumani', 'Bulung‘ur tumani', 'Ishtixon tumani', 'Narpay tumani',
+        ],
+        'Andijon' => [
+            'Andijon shahri', 'Xonobod shahri', 'Asaka tumani', 'Shahrixon tumani',
+            'Baliqchi tumani', 'Izboskan tumani', 'Marhamat tumani', 'Qo‘rg‘ontepa tumani',
+        ],
+        'Namangan' => [
+            'Namangan shahri', 'Chust tumani', 'Pop tumani', 'Kosonsoy tumani',
+            'Uchqo‘rg‘on tumani', 'Chortoq tumani', 'To‘raqo‘rg‘on tumani', 'Yangiqo‘rg‘on tumani',
+        ],
+        'Toshkent viloyati' => [
+            'Nurafshon shahri', 'Angren shahri', 'Olmaliq shahri', 'Chirchiq shahri', 'Bekobod shahri',
+            'Ohangaron shahri', 'Yangiyo‘l shahri', 'Zangiota tumani', 'Qibray tumani', 'Toshkent tumani',
+            'Parkent tumani', 'Bo‘stonliq tumani', 'Yuqorichirchiq tumani', 'O‘rtachirchiq tumani', 'Chinoz tumani',
+        ],
+        'Buxoro' => [
+            'Buxoro shahri', 'Kogon shahri', 'G‘ijduvon tumani', 'Vobkent tumani', 'Jondor tumani',
+            'Qorako‘l tumani', 'Olot tumani', 'Peshku tumani', 'Romitan tumani', 'Shofirkon tumani', 'Qorovulbozor tumani',
+        ],
+        'Qashqadaryo' => [
+            'Qarshi shahri', 'Shahrisabz shahri', 'Kitob tumani', 'G‘uzor tumani', 'Koson tumani',
+            'Muborak tumani', 'Yakkabog‘ tumani', 'Chiroqchi tumani', 'Qamashi tumani', 'Kasbi tumani', 'Dehqonobod tumani',
+        ],
+        'Surxondaryo' => [
+            'Termiz shahri', 'Denov tumani', 'Sherobod tumani', 'Sho‘rchi tumani', 'Jarqo‘rg‘on tumani',
+            'Qumqo‘rg‘on tumani', 'Boysun tumani', 'Angor tumani', 'Sariosiyo tumani', 'Uzun tumani', 'Muzrabot tumani',
+        ],
+        'Jizzax' => [
+            'Jizzax shahri', 'G‘allaorol tumani', 'Zomin tumani', 'Forish tumani', 'Paxtakor tumani',
+            'Do‘stlik tumani', 'Baxmal tumani', 'Zarbdor tumani', 'Mirzacho‘l tumani', 'Arnasoy tumani',
+        ],
+        'Sirdaryo' => [
+            'Guliston shahri', 'Yangiyer shahri', 'Shirin shahri', 'Boyovut tumani', 'Sardoba tumani',
+            'Sirdaryo tumani', 'Xovos tumani', 'Mirzaobod tumani', 'Oqoltin tumani',
+        ],
+        'Navoiy' => [
+            'Navoiy shahri', 'Zarafshon shahri', 'Karmana tumani', 'Qiziltepa tumani', 'Nurota tumani',
+            'Uchquduq tumani', 'Konimex tumani', 'Xatirchi tumani', 'Navbahor tumani', 'Tomdi tumani',
+        ],
+        'Xorazm' => [
+            'Urganch shahri', 'Xiva shahri', 'Xonqa tumani', 'Hazorasp tumani', 'Gurlan tumani',
+            'Shovot tumani', 'Bog‘ot tumani', 'Qo‘shko‘pir tumani', 'Yangiariq tumani', 'Yangibozor tumani', 'Urganch tumani',
+        ],
+        'Qoraqalpog‘iston' => [
+            'Nukus shahri', 'Xo‘jayli tumani', 'Beruniy tumani', 'To‘rtko‘l tumani', 'Ellikqal’a tumani',
+            'Chimboy tumani', 'Qo‘ng‘irot tumani', 'Mo‘ynoq tumani', 'Taxiatosh shahri', 'Amudaryo tumani', 'Kegeyli tumani',
+        ],
+    ],
+
+    /*
+     | Buyurtma holatlari (bitta joyda). Buyurtma sahifasi ham, bosh sahifadagi faol buyurtma kartasi ham
+     | shu ro'yxatdan foydalanadi. Backend ulanganda status serverdan keladi (paid, packing, shipping, ...).
+     |
+     |  step    — nechanchi bosqich (1..4), progress chiziqlari va "n / 4" uchun
+     |  badge   — qisqa nom (bosh sahifa kartasi), color — rang sxemasi (pastdagi 'status_colors')
+     |  title   — buyurtma sahifasidagi sarlavha, subtitle — uning ostidagi izoh
+     |  active  — bosh sahifada faol buyurtma kartasi ko'rinadimi
+     |  note    — holat kartasi ostidagi izoh bloki (kuryer, SMS, topshirildi va h.k.)
+     */
+    'order_statuses' => [
+        'paid' => [
+            'step' => 1, 'badge' => 'To‘landi', 'color' => 'neutral', 'active' => true,
+            'title' => 'To‘lov qabul qilindi',
+            'subtitle' => 'Taxminiy yetkazish: 20 noyabr',
+            'note' => ['type' => 'info', 'title' => 'Buyurtma omborga yuborildi', 'text' => 'Yig‘ish boshlanganda SMS orqali xabar beramiz'],
+        ],
+        'packing' => [
+            'step' => 2, 'badge' => 'Tayyorlanmoqda', 'color' => 'warning', 'active' => true,
+            'title' => 'Tayyorlanmoqda',
+            'subtitle' => 'Taxminiy yetkazish: 20 noyabr',
+            'note' => ['type' => 'info', 'title' => 'Tovarlar tekshirilib, qadoqlanmoqda', 'text' => 'Kuryer tayinlanganda ismi va raqamini yuboramiz'],
+        ],
+        'shipping' => [
+            'step' => 3, 'badge' => 'Yetkazilmoqda', 'color' => 'primary', 'active' => true,
+            'title' => 'Yo‘lda — kuryerda',
+            'subtitle' => 'Taxminiy yetkazish: 20 noyabr',
+            'note' => ['type' => 'courier', 'title' => 'Kuryer: Bekzod', 'text' => 'Yetkazishdan 1 soat oldin qo‘ng‘iroq qiladi'],
+        ],
+        'delivered' => [
+            'step' => 4, 'badge' => 'Yetkazildi', 'color' => 'success', 'active' => false,
+            'title' => 'Buyurtma yetkazildi',
+            'subtitle' => '20 noyabr, 14:05 da yetkazildi',
+            'note' => ['type' => 'success', 'title' => 'Mohira Karimova qabul qildi', 'text' => 'Imzo bilan topshirildi · 20.11 · 14:05'],
+        ],
+        'cancelled' => [
+            'step' => 0, 'badge' => 'Bekor qilindi', 'color' => 'danger', 'active' => false,
+            'title' => 'Buyurtma bekor qilindi',
+            'subtitle' => '18 noyabr, 11:40',
+            'note' => ['type' => 'danger', 'title' => '78 140 ₽ qaytariladi', 'text' => '1–3 ish kunida to‘lov qilingan kartaga tushadi'],
+        ],
+    ],
+
+    // Holat ranglari: badge foni / matni / progress va urg'u rangi
+    'status_colors' => [
+        'neutral' => ['bg' => '#eef2f6', 'text' => '#475467', 'accent' => '#227bfc'],
+        'warning' => ['bg' => '#fef0c7', 'text' => '#b54708', 'accent' => '#f79009'],
+        'primary' => ['bg' => '#d0e7fd', 'text' => '#227bfc', 'accent' => '#227bfc'],
+        'success' => ['bg' => '#d1fadf', 'text' => '#039855', 'accent' => '#12b76a'],
+        'danger' => ['bg' => '#fee4e2', 'text' => '#d92d20', 'accent' => '#f04438'],
+    ],
+
+    // Buyurtma bosqichlari (timeline). done/current/pending holatlari uchun matn va vaqt.
+    // Buyurtma bosqichlari (timeline) — har bir holatda bir xil nom bilan ko'rsatiladi
+    'order_steps' => [
+        1 => 'To‘landi',
+        2 => 'Tayyorlanmoqda',
+        3 => 'Kuryerga topshirildi',
+        4 => 'Buyurtma yetkazildi',
+    ],
+
+    'order' => [
+        'id' => '482913',
+        'items' => [
+            ['title' => 'Galaxy A55 5G, 8/256 GB', 'qty' => '1 dona', 'price' => '32 990 ₽', 'image' => 'img/gallery-a55.png'],
+            ['title' => 'Muzlatgich Artel 345 L', 'qty' => '1 dona', 'price' => '38 990 ₽', 'image' => 'img/thumb-2.png'],
+            ['title' => 'Yumshoq ayiqcha, 80 sm', 'qty' => '2 dona', 'price' => '4 980 ₽', 'image' => 'img/thumb-3.png'],
+        ],
+    ],
+];
