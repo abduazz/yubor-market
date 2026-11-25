@@ -6,6 +6,7 @@
                 <img src="{{ asset('img/icon-back.svg') }}" alt="" class="size-full">
             </a>
             <h1 class="min-w-0 flex-1 text-[18px] leading-normal font-semibold text-ink">Xususiyatlar</h1>
+            <x-script-switcher />
         </header>
 
         <div class="flex w-full flex-col gap-[12px] px-[16px] pt-[8px]">

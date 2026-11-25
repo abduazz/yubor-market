@@ -1,6 +1,49 @@
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+const IS_CYRILLIC = document.documentElement?.dataset?.script === 'cyrl';
+
+const uzToCyrl = (text) => {
+    if (!text || typeof text !== 'string' || !/[A-Za-z]/.test(text)) return text || '';
+    const keep = ['Yubor Market', 'YUBOR', 'MARKET', 'Telegram', 'WhatsApp', 'Email', 'SMS', 'SBP', 'MIR', 'EMU', 'RUB', 'UZS', 'VK'];
+    const saved = [];
+    let s = text;
+    keep.forEach((tok) => {
+        const re = new RegExp(`(?<![A-Za-z])${tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`, 'g');
+        s = s.replace(re, (m) => {
+            const id = `\x01${saved.length}\x02`;
+            saved.push(m);
+            return id;
+        });
+    });
+    s = s
+        .replace(/O['‘’ʼ`]/g, 'Ў').replace(/o['‘’ʼ`]/g, 'ў')
+        .replace(/G['‘’ʼ`]/g, 'Ғ').replace(/g['‘’ʼ`]/g, 'ғ')
+        .replace(/Yoў|YOў|Yў/g, 'Йў').replace(/yoў|yў/g, 'йў')
+        .replace(/SH|Sh/g, 'Ш').replace(/sh/g, 'ш')
+        .replace(/CH|Ch/g, 'Ч').replace(/ch/g, 'ч')
+        .replace(/YO|Yo/g, 'Ё').replace(/yo/g, 'ё')
+        .replace(/YA|Ya/g, 'Я').replace(/ya/g, 'я')
+        .replace(/YU|Yu/g, 'Ю').replace(/yu/g, 'ю')
+        .replace(/(^|[\s(\["«—\-]|[aeiouўаеёиоуўэюяAEIOUЎАЕЁИОУЎЭЮЯ])Ye/g, '$1Е')
+        .replace(/(^|[\s(\["«—\-]|[aeiouўаеёиоуўэюяAEIOUЎАЕЁИОУЎЭЮЯ])ye/g, '$1е')
+        .replace(/(?<![A-Za-zА-Яа-яЎўҚқҒғҲҳ])E/g, 'Э')
+        .replace(/(?<![A-Za-zА-Яа-яЎўҚқҒғҲҳ])e/g, 'э')
+        .replace(/(?<=[aeiouўаеёиоуўэюяAEIOUЎАЕЁИОУЎЭЮЯʼ’'])e/g, 'э')
+        .replace(/(?<=[A-Za-zА-Яа-яЎўҚқҒғҲҳ])['‘’ʼ`](?=[A-Za-zА-Яа-яЎўҚқҒғҲҳ])/g, 'ъ');
+    const map = {
+        A:'А',a:'а',B:'Б',b:'б',D:'Д',d:'д',E:'Е',e:'е',F:'Ф',f:'ф',G:'Г',g:'г',H:'Ҳ',h:'ҳ',
+        I:'И',i:'и',J:'Ж',j:'ж',K:'К',k:'к',L:'Л',l:'л',M:'М',m:'м',N:'Н',n:'н',O:'О',o:'о',
+        P:'П',p:'п',Q:'Қ',q:'қ',R:'Р',r:'р',S:'С',s:'с',T:'Т',t:'т',U:'У',u:'у',V:'В',v:'в',
+        X:'Х',x:'х',Y:'Й',y:'й',Z:'З',z:'з',
+    };
+    s = s.replace(/[A-Za-z]/g, (ch) => map[ch] || ch);
+    saved.forEach((tok, i) => { s = s.replace(`\x01${i}\x02`, tok); });
+    return s;
+};
+
+const t = (text) => (IS_CYRILLIC ? uzToCyrl(text) : text);
+
 const STORE_KEY = 'yubor_checkout';
 const ORDER_KEY = 'yubor_active_order';
 
@@ -248,8 +291,8 @@ function initShare() {
             tmp.remove();
         }
         copyBtn.dataset.copied = 'true';
-        copyBtn.textContent = 'Nusxalandi ✓';
-        setTimeout(() => { copyBtn.dataset.copied = 'false'; copyBtn.textContent = 'Nusxalash'; }, 1800);
+        copyBtn.textContent = t('Nusxalandi ✓');
+        setTimeout(() => { copyBtn.dataset.copied = 'false'; copyBtn.textContent = t('Nusxalash'); }, 1800);
     });
 
     $$('[data-close-sheet]', sheet).forEach((el) => el.addEventListener('click', () => closeSheet(sheet)));
@@ -292,7 +335,7 @@ function initCollapsible() {
         const btn = $('[data-collapsible-toggle]', box);
         btn?.addEventListener('click', () => {
             const open = text.classList.toggle('line-clamp-4');
-            btn.textContent = open ? 'Batafsil' : 'Yopish';
+            btn.textContent = open ? t('Batafsil') : t('Yopish');
         });
     });
 }
@@ -353,7 +396,9 @@ function closeSheet(sheet) {
 function filterSheet(sheet, query) {
     const q = query.trim().toLowerCase();
     $$('[data-sheet-option]', sheet).forEach((btn) => {
-        btn.parentElement.hidden = q && !btn.dataset.sheetOption.toLowerCase().includes(q);
+        const raw = btn.dataset.sheetOption.toLowerCase();
+        const cyrl = uzToCyrl(btn.dataset.sheetOption).toLowerCase();
+        btn.parentElement.hidden = q && !raw.includes(q) && !cyrl.includes(q);
     });
 }
 
@@ -363,7 +408,7 @@ function renderOptions(sheet, items) {
         <li>
             <button type="button" data-sheet-option="${item}"
                 class="group flex w-full items-center justify-between border-b border-divider py-[13px] text-left">
-                <span class="text-[15px] leading-normal whitespace-nowrap text-ink group-data-[selected=true]:font-semibold">${item}</span>
+                <span class="text-[15px] leading-normal whitespace-nowrap text-ink group-data-[selected=true]:font-semibold">${t(item)}</span>
                 <img src="/img/icon-check.svg" alt="" class="hidden size-[22px] group-data-[selected=true]:block">
             </button>
         </li>`).join('');
@@ -380,7 +425,7 @@ function initCheckout() {
 
     const setField = (name, value, placeholder) => {
         const btn = $(`[data-value-for="${name}"]`).closest('button');
-        $(`[data-value-for="${name}"]`).textContent = value || placeholder;
+        $(`[data-value-for="${name}"]`).textContent = t(value || placeholder);
         $(`input[name="${name}"]`, btn).value = value || '';
         btn.dataset.filled = value ? 'true' : 'false';
     };
@@ -417,7 +462,7 @@ function initCheckout() {
         if (!state.region) { openSheet(regionSheet); return; }
         const items = districts[state.region] || [`${state.region} shahri`, `${state.region} tumani`];
         renderOptions(districtSheet, items);
-        $('[data-sheet-title]', districtSheet).textContent = `${state.region} — tuman / shahar`;
+        $('[data-sheet-title]', districtSheet).textContent = t(`${state.region} — tuman / shahar`);
         state.pending = state.district;
         $$('[data-sheet-option]', districtSheet).forEach((b) => (b.dataset.selected = String(b.dataset.sheetOption === state.district)));
         openSheet(districtSheet);
@@ -511,23 +556,23 @@ const UZ_OPERATORS = ['20', '33', '50', '55', '61', '62', '65', '66', '67', '69'
 
 const RULES = {
     name(v) {
-        if (v.length < 2) return 'Ism kamida 2 ta harfdan iborat bo‘lsin';
-        if (!/^[\p{L}\s'‘’ʼ().-]+$/u.test(v)) return 'Ismda faqat harflar bo‘lishi mumkin';
+        if (v.length < 2) return t('Ism kamida 2 ta harfdan iborat bo‘lsin');
+        if (!/^[\p{L}\s'‘’ʼ().-]+$/u.test(v)) return t('Ismda faqat harflar bo‘lishi mumkin');
         return null;
     },
     'phone-ru'(v) {
         const d = v.replace(/\D/g, '');
-        if (d.length < 10) return 'Raqam to‘liq emas. Masalan: +7 900 123 - 45 - 67';
+        if (d.length < 10) return t('Raqam to‘liq emas. Masalan: +7 900 123 - 45 - 67');
         return null;
     },
     'phone-uz'(v) {
         const d = v.replace(/\D/g, '');
-        if (d.length < 9) return 'Raqam to‘liq emas. Masalan: +998 90 123 - 45 - 67';
-        if (!UZ_OPERATORS.includes(d.slice(0, 2))) return 'Operator kodi noto‘g‘ri: ' + d.slice(0, 2);
+        if (d.length < 9) return t('Raqam to‘liq emas. Masalan: +998 90 123 - 45 - 67');
+        if (!UZ_OPERATORS.includes(d.slice(0, 2))) return t('Operator kodi noto‘g‘ri: ') + d.slice(0, 2);
         return null;
     },
     address(v) {
-        if (v.length < 5) return 'Manzilni to‘liqroq yozing: mahalla, ko‘cha va uy raqami';
+        if (v.length < 5) return t('Manzilni to‘liqroq yozing: mahalla, ko‘cha va uy raqami');
         return null;
     },
 };
@@ -548,13 +593,13 @@ function createValidator(form) {
         const rule = input.dataset.rule;
         if (!v) {
             if (!('required' in input.dataset)) return null; // ixtiyoriy va bo'sh — xato emas
-            return input.dataset.message || EMPTY_MESSAGES[rule] || 'Maydonni to‘ldiring';
+            return input.dataset.message || t(EMPTY_MESSAGES[rule] || 'Maydonni to‘ldiring');
         }
         let error = rule && RULES[rule] ? RULES[rule](v) : null;
         // qo'shimcha raqam asosiy raqam bilan bir xil bo'lmasin
         if (!error && input.name === 'recipient_phone_2') {
             const main = $('[name="recipient_phone"]', form).value.replace(/\D/g, '');
-            if (main && main === v.replace(/\D/g, '')) error = 'Qo‘shimcha raqam asosiy raqamdan farq qilsin';
+            if (main && main === v.replace(/\D/g, '')) error = t('Qo‘shimcha raqam asosiy raqamdan farq qilsin');
         }
         return error;
     };
@@ -607,9 +652,9 @@ function initPaymentSummary() {
     const s = store.get();
     if (s.recipient_phone) phone.textContent = s.recipient_phone.replace(/ - /g, '-');
     if (s.region && s.district) {
-        $('[data-summary="address"]').textContent = [s.region, s.district.replace(/ (shahri|tumani)$/, ''), s.address].filter(Boolean).join(', ');
+        $('[data-summary="address"]').textContent = t([s.region, s.district.replace(/ (shahri|tumani)$/, ''), s.address].filter(Boolean).join(', '));
         const regEl = $('[data-summary="region"]');
-        if (regEl) regEl.textContent = s.region;
+        if (regEl) regEl.textContent = t(s.region);
     }
     const wishInput = $('[data-wish-input]');
     if (wishInput) {
@@ -781,19 +826,19 @@ function initActiveOrder() {
         if (totalEl && ord.total) totalEl.textContent = ord.total;
 
         const countEl = $('[data-order-count]', card);
-        if (countEl && ord.items_count) countEl.textContent = `${ord.items_count} ta mahsulot`;
+        if (countEl && ord.items_count) countEl.textContent = `${ord.items_count} ${t('ta mahsulot')}`;
 
         const imagesBox = $('[data-order-images]', card);
         if (imagesBox && Array.isArray(ord.images) && ord.images.length > 0) {
             imagesBox.innerHTML = ord.images
-                .map((src) => `<img src="${src}" alt="" class="h-[64px] w-[52px] shrink-0 rounded-[12px] bg-[#f8f7f5] object-cover">`)
+                .map((src) => `<img src="${src}" alt="" class="h-[64px] w-[52px] shrink-0 rounded-[12px] bg-white object-cover">`)
                 .join('');
         }
 
         const palette = colors[status.color] || {};
         const badge = $('[data-order-badge]', card);
-        badge.textContent = status.badge;
-        badge.className = 'rounded-[8px] px-[8px] py-[4px] text-[11px] leading-normal font-semibold whitespace-nowrap';
+        badge.textContent = t(status.badge);
+        badge.className = 'rounded-[8px] border border-white/80 px-[8px] py-[4px] text-[11px] leading-normal font-semibold whitespace-nowrap';
         badge.style.background = palette.bg;
         badge.style.color = palette.text;
 
@@ -814,7 +859,7 @@ function initActiveOrder() {
         }
         const name = (ord.recipient || '').replace(/\s*\(.*\)\s*$/, '');
         const district = (ord.district || '').replace(/ (shahri|tumani)$/, '');
-        $('[data-order-to]', card).textContent = `${name} · ${ord.region}${district ? ', ' + district : ''}`;
+        $('[data-order-to]', card).textContent = t(`${name} · ${ord.region}${district ? ', ' + district : ''}`);
         card.classList.remove('hidden');
     };
 

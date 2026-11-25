@@ -132,13 +132,10 @@ class DatabaseSeeder extends Seeder
         }
 
         $defaultSettings = [
-            ['key' => 'rate_card_uzs', 'value' => '158.00', 'group' => 'payments', 'label' => 'Kurs: Bank kartasi (1 RUB → UZS)'],
-            ['key' => 'rate_sbp_uzs', 'value' => '156.250', 'group' => 'payments', 'label' => 'Kurs: SBP (1 RUB → UZS)'],
-            ['key' => 'gift_wrap_fee_rub', 'value' => '190', 'group' => 'payments', 'label' => 'Sovg‘a qadog‘i narxi (₽)'],
-            ['key' => 'oversize_fee_rub', 'value' => '990', 'group' => 'payments', 'label' => 'Katta texnika qo‘shimcha to‘lovi (₽)'],
+            ['key' => 'receiving_cards', 'value' => '[]', 'group' => 'cards', 'label' => 'Qabul qiluvchi kartalar (Uzcard / Humo)'],
             ['key' => 'delivery_provider_text', 'value' => '2-4 kunda EMU po‘chta orqali', 'group' => 'delivery', 'label' => 'Yetkazish xizmati matni'],
             ['key' => 'delivery_badge_text', 'value' => 'Yetkazish bepul · 2–3 kun (EMU)', 'group' => 'delivery', 'label' => 'Checkout yetkazish xabari'],
-            ['key' => 'support_chat_url', 'value' => 'https://t.me/yubor_support', 'group' => 'general', 'label' => 'Yordam chat havolasi (Telegram)'],
+            ['key' => 'support_chat_url', 'value' => 'https://t.me/yubormarket_support', 'group' => 'general', 'label' => 'Yordam chat havolasi (Telegram)'],
             ['key' => 'marketplace_phone', 'value' => '+998 71 200-00-00', 'group' => 'general', 'label' => 'Call-markaz raqami'],
         ];
 

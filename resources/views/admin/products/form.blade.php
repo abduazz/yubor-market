@@ -1,8 +1,8 @@
 @php
     $isEdit = $product->exists;
-    $specs = old('spec_keys')
-        ? array_combine(old('spec_keys', []), old('spec_values', []))
-        : ($product->specs ?: config('catalog.specs'));
+    $locales = $locales ?? \App\Models\Product::LOCALES;
+    $translations = $product->allTranslationsForForm();
+    $oldTranslations = old('translations');
     $imagesText = old('images_text', $isEdit && is_array($product->images) ? implode("\n", $product->images) : '');
     $specGroupsJson = old('spec_groups_json', $product->spec_groups ? json_encode($product->spec_groups, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '');
 @endphp
@@ -14,12 +14,6 @@
            class="rounded-[12px] bg-[#f1f5f8] px-[14px] py-[10px] text-[13px] font-medium text-ink hover:bg-[#e2e8f0]">
             {{ __('admin.products.back_to_products') }}
         </a>
-        @if ($isEdit)
-            <a href="{{ route('product', $product->slug) }}" target="_blank"
-               class="rounded-[12px] bg-[#e8f1fe] px-[14px] py-[10px] text-[13px] font-semibold text-[#227bfc] hover:bg-[#d0e7fd]">
-                {{ __('admin.products.view_on_storefront') }}
-            </a>
-        @endif
     </x-slot:actions>
 
     <form action="{{ $isEdit ? route('admin.products.update', $product) : route('admin.products.store') }}"
@@ -32,24 +26,137 @@
 
         {{-- Left 2 columns --}}
         <div class="flex flex-col gap-[20px] xl:col-span-2">
-            {{-- Basic info --}}
-            <div class="flex flex-col gap-[14px] rounded-[20px] bg-white p-[20px] shadow-2xs">
-                <h2 class="text-[16px] font-bold text-ink">{{ __('admin.products.basic_info') }}</h2>
-
-                <div class="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+            {{-- 5-Language Switcher & Localized Fields (Title, Full Title, Description, Specs) --}}
+            <div class="flex flex-col gap-[16px] rounded-[20px] bg-white p-[20px] shadow-2xs">
+                <div class="flex flex-wrap items-center justify-between gap-[12px] border-b border-[#eef2f6] pb-[14px]">
                     <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.products.title_label') }}</label>
-                        <input type="text" name="title" value="{{ old('title', $product->title) }}" required
-                               placeholder="Smartfon Galaxy A55 5G, 8/256 GB"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">
+                        <h2 class="text-[16px] font-bold text-ink">{{ __('admin.products.multilang_title') }}</h2>
+                        <p class="text-[12px] text-[#737373]">{{ __('admin.products.multilang_sub') }}</p>
                     </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.products.full_title_label') }}</label>
-                        <input type="text" name="full_title" value="{{ old('full_title', $product->full_title) }}"
-                               placeholder="Smartfon Galaxy A55 5G, 8/256 GB, ko‘k"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">
+                    <div class="inline-flex flex-wrap items-center gap-[4px] rounded-[12px] bg-[#f1f5f8] p-[3px]" role="tablist">
+                        @foreach ($locales as $locKey => $locLabel)
+                            @php
+                                $locTitle = $oldTranslations[$locKey]['title'] ?? ($translations[$locKey]['title'] ?? '');
+                            @endphp
+                            <button type="button"
+                                    data-prod-lang-tab="{{ $locKey }}"
+                                    class="inline-flex items-center gap-[5px] rounded-[9px] px-[11px] py-[6px] text-[12px] font-semibold transition {{ $locKey === 'uz' ? 'bg-white text-[#227bfc] shadow-2xs' : 'text-[#525252] hover:text-ink' }}">
+                                <span>{{ $locLabel }}</span>
+                                <span data-prod-lang-dot="{{ $locKey }}"
+                                      class="size-[6px] rounded-full {{ trim((string) $locTitle) !== '' ? 'bg-[#12b76a]' : 'bg-[#cbd5e1]' }}"></span>
+                            </button>
+                        @endforeach
                     </div>
                 </div>
+
+                @foreach ($locales as $locKey => $locLabel)
+                    @php
+                        $locData = $translations[$locKey] ?? ['title' => '', 'full_title' => '', 'warranty_text' => '', 'description' => '', 'specs' => []];
+                        $tTitle = $oldTranslations[$locKey]['title'] ?? $locData['title'];
+                        $tFullTitle = $oldTranslations[$locKey]['full_title'] ?? $locData['full_title'];
+                        $tWarranty = $oldTranslations[$locKey]['warranty_text'] ?? $locData['warranty_text'];
+                        $tDesc = $oldTranslations[$locKey]['description'] ?? $locData['description'];
+
+                        if (isset($oldTranslations[$locKey]['spec_keys'])) {
+                            $tSpecs = array_combine($oldTranslations[$locKey]['spec_keys'], $oldTranslations[$locKey]['spec_values'] ?? []);
+                        } else {
+                            $tSpecs = $locData['specs'] ?: [];
+                        }
+                    @endphp
+
+                    <div class="flex flex-col gap-[16px] {{ $locKey === 'uz' ? '' : 'hidden' }}" data-prod-lang-panel="{{ $locKey }}">
+                        <div class="grid grid-cols-1 gap-[14px] sm:grid-cols-2">
+                            <div>
+                                <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">
+                                    {{ __('admin.products.title_label') }} [{{ $locLabel }}]
+                                </label>
+                                <input type="text"
+                                       name="translations[{{ $locKey }}][title]"
+                                       value="{{ $tTitle }}"
+                                       data-prod-title-input="{{ $locKey }}"
+                                       placeholder="Smartfon Galaxy A55 5G, 8/256 GB"
+                                       class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">
+                            </div>
+                            <div>
+                                <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">
+                                    {{ __('admin.products.full_title_label') }} [{{ $locLabel }}]
+                                </label>
+                                <input type="text"
+                                       name="translations[{{ $locKey }}][full_title]"
+                                       value="{{ $tFullTitle }}"
+                                       placeholder="Smartfon Galaxy A55 5G, 8/256 GB, ko‘k"
+                                       class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">
+                                {{ __('admin.products.warranty_label') }} [{{ $locLabel }}]
+                            </label>
+                            <input type="text"
+                                   name="translations[{{ $locKey }}][warranty_text]"
+                                   value="{{ $tWarranty }}"
+                                   class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">
+                        </div>
+
+                        <div>
+                            <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">
+                                {{ __('admin.products.description_label') }} [{{ $locLabel }}]
+                            </label>
+                            <textarea name="translations[{{ $locKey }}][description]" rows="4"
+                                      class="w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] p-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">{{ $tDesc }}</textarea>
+                        </div>
+
+                        {{-- Per-language Specs Builder --}}
+                        <div class="flex flex-col gap-[10px] rounded-[16px] border border-[#eef2f6] bg-[#f8fafc] p-[14px]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-[14px] font-bold text-ink">{{ __('admin.products.specs_title') }} [{{ $locLabel }}]</h3>
+                                    <p class="text-[11px] text-[#737373]">{{ __('admin.products.specs_sub') }}</p>
+                                </div>
+                                <button type="button" onclick="addSpecRow('{{ $locKey }}')"
+                                        class="rounded-[10px] bg-[#e8f1fe] px-[12px] py-[6px] text-[12px] font-semibold text-[#227bfc] hover:bg-[#d0e7fd]">
+                                    {{ __('admin.products.add_spec_row') }}
+                                </button>
+                            </div>
+
+                            <div id="specs-container-{{ $locKey }}" class="flex flex-col gap-[8px]">
+                                @forelse ($tSpecs as $label => $val)
+                                    <div class="flex items-center gap-[8px]" data-spec-row>
+                                        <input type="text" name="translations[{{ $locKey }}][spec_keys][]" value="{{ $label }}"
+                                               placeholder="{{ __('admin.products.spec_name_placeholder') }}"
+                                               class="h-[40px] w-1/3 rounded-[10px] border border-[#dbe4ee] bg-white px-[12px] text-[13px]">
+                                        <input type="text" name="translations[{{ $locKey }}][spec_values][]" value="{{ $val }}"
+                                               placeholder="{{ __('admin.products.spec_val_placeholder') }}"
+                                               class="h-[40px] flex-1 rounded-[10px] border border-[#dbe4ee] bg-white px-[12px] text-[13px]">
+                                        <button type="button" onclick="this.closest('[data-spec-row]').remove()"
+                                                class="flex size-[40px] shrink-0 items-center justify-center rounded-[10px] bg-[#fee4e2] text-[#d92d20] hover:bg-[#fecdca]">
+                                            ✕
+                                        </button>
+                                    </div>
+                                @empty
+                                    <div class="flex items-center gap-[8px]" data-spec-row>
+                                        <input type="text" name="translations[{{ $locKey }}][spec_keys][]" value=""
+                                               placeholder="{{ __('admin.products.spec_name_placeholder') }}"
+                                               class="h-[40px] w-1/3 rounded-[10px] border border-[#dbe4ee] bg-white px-[12px] text-[13px]">
+                                        <input type="text" name="translations[{{ $locKey }}][spec_values][]" value=""
+                                               placeholder="{{ __('admin.products.spec_val_placeholder') }}"
+                                               class="h-[40px] flex-1 rounded-[10px] border border-[#dbe4ee] bg-white px-[12px] text-[13px]">
+                                        <button type="button" onclick="this.closest('[data-spec-row]').remove()"
+                                                class="flex size-[40px] shrink-0 items-center justify-center rounded-[10px] bg-[#fee4e2] text-[#d92d20] hover:bg-[#fecdca]">
+                                            ✕
+                                        </button>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Shared product parameters (Price, Category, Brand, Stock, Slug) --}}
+            <div class="flex flex-col gap-[14px] rounded-[20px] bg-white p-[20px] shadow-2xs">
+                <h2 class="text-[16px] font-bold text-ink">{{ __('admin.products.basic_info') }}</h2>
 
                 <div class="grid grid-cols-1 gap-[14px] sm:grid-cols-3">
                     <div>
@@ -102,48 +209,7 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.products.warranty_label') }}</label>
-                    <input type="text" name="warranty_text" value="{{ old('warranty_text', $product->warranty_text) }}"
-                           class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">
-                </div>
-
-                <div>
-                    <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.products.description_label') }}</label>
-                    <textarea name="description" rows="4"
-                              class="w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] p-[12px] text-[13px] outline-none focus:border-[#227bfc] focus:bg-white">{{ old('description', $product->description) }}</textarea>
-                </div>
-            </div>
-
-            {{-- Dynamic Specs Builder --}}
-            <div class="flex flex-col gap-[14px] rounded-[20px] bg-white p-[20px] shadow-2xs">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-[16px] font-bold text-ink">{{ __('admin.products.specs_title') }}</h2>
-                        <p class="text-[12px] text-[#737373]">{{ __('admin.products.specs_sub') }}</p>
-                    </div>
-                    <button type="button" onclick="addSpecRow()"
-                            class="rounded-[10px] bg-[#e8f1fe] px-[12px] py-[6px] text-[12px] font-semibold text-[#227bfc] hover:bg-[#d0e7fd]">
-                        {{ __('admin.products.add_spec_row') }}
-                    </button>
-                </div>
-
-                <div id="specs-container" class="flex flex-col gap-[8px]">
-                    @foreach ($specs as $label => $val)
-                        <div class="flex items-center gap-[8px]" data-spec-row>
-                            <input type="text" name="spec_keys[]" value="{{ $label }}" placeholder="{{ __('admin.products.spec_name_placeholder') }}"
-                                   class="h-[40px] w-1/3 rounded-[10px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                            <input type="text" name="spec_values[]" value="{{ $val }}" placeholder="{{ __('admin.products.spec_val_placeholder') }}"
-                                   class="h-[40px] flex-1 rounded-[10px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                            <button type="button" onclick="this.closest('[data-spec-row]').remove()"
-                                    class="flex size-[40px] shrink-0 items-center justify-center rounded-[10px] bg-[#fee4e2] text-[#d92d20] hover:bg-[#fecdca]">
-                                ✕
-                            </button>
-                        </div>
-                    @endforeach
-                </div>
-
-                <details class="mt-[6px] rounded-[12px] border border-[#eef2f6] bg-[#f8fafc] p-[12px]">
+                <details class="mt-[4px] rounded-[12px] border border-[#eef2f6] bg-[#f8fafc] p-[12px]">
                     <summary class="cursor-pointer text-[12px] font-semibold text-[#525252]">
                         {{ __('admin.products.spec_groups_summary') }}
                     </summary>
@@ -239,20 +305,51 @@
     </form>
 
     <script>
-        function addSpecRow() {
-            const box = document.getElementById('specs-container');
+        function addSpecRow(loc) {
+            const box = document.getElementById('specs-container-' + loc);
+            if (!box) return;
             const row = document.createElement('div');
             row.className = 'flex items-center gap-[8px]';
             row.dataset.specRow = '';
             row.innerHTML = `
-                <input type="text" name="spec_keys[]" placeholder="{{ __('admin.products.spec_name_placeholder') }}"
-                       class="h-[40px] w-1/3 rounded-[10px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                <input type="text" name="spec_values[]" placeholder="{{ __('admin.products.spec_val_placeholder') }}"
-                       class="h-[40px] flex-1 rounded-[10px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
+                <input type="text" name="translations[${loc}][spec_keys][]" placeholder="{{ __('admin.products.spec_name_placeholder') }}"
+                       class="h-[40px] w-1/3 rounded-[10px] border border-[#dbe4ee] bg-white px-[12px] text-[13px]">
+                <input type="text" name="translations[${loc}][spec_values][]" placeholder="{{ __('admin.products.spec_val_placeholder') }}"
+                       class="h-[40px] flex-1 rounded-[10px] border border-[#dbe4ee] bg-white px-[12px] text-[13px]">
                 <button type="button" onclick="this.closest('[data-spec-row]').remove()"
                         class="flex size-[40px] shrink-0 items-center justify-center rounded-[10px] bg-[#fee4e2] text-[#d92d20] hover:bg-[#fecdca]">✕</button>
             `;
             box.appendChild(row);
         }
+
+        (function () {
+            const tabs = document.querySelectorAll('[data-prod-lang-tab]');
+            const panels = document.querySelectorAll('[data-prod-lang-panel]');
+
+            tabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    const loc = tab.dataset.prodLangTab;
+                    tabs.forEach((t) => {
+                        const active = t.dataset.prodLangTab === loc;
+                        t.className = 'inline-flex items-center gap-[5px] rounded-[9px] px-[11px] py-[6px] text-[12px] font-semibold transition ' +
+                            (active ? 'bg-white text-[#227bfc] shadow-2xs' : 'text-[#525252] hover:text-ink');
+                    });
+                    panels.forEach((p) => {
+                        p.classList.toggle('hidden', p.dataset.prodLangPanel !== loc);
+                    });
+                });
+            });
+
+            document.querySelectorAll('[data-prod-title-input]').forEach((input) => {
+                input.addEventListener('input', () => {
+                    const loc = input.dataset.prodTitleInput;
+                    const dot = document.querySelector('[data-prod-lang-dot="' + loc + '"]');
+                    if (!dot) return;
+                    const filled = input.value.trim().length > 0;
+                    dot.classList.toggle('bg-[#12b76a]', filled);
+                    dot.classList.toggle('bg-[#cbd5e1]', !filled);
+                });
+            });
+        })();
     </script>
 </x-admin.layouts.app>

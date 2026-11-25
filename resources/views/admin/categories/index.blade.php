@@ -22,10 +22,6 @@
                                 <input type="checkbox" name="is_active" value="1" @checked($category->is_active) class="size-[16px] accent-[#227bfc]">
                                 <span>{{ __('admin.categories.active_label') }}</span>
                             </label>
-                            <a href="{{ route('category', $category->slug) }}" target="_blank"
-                               class="rounded-[8px] bg-[#e8f1fe] px-[10px] py-[6px] text-[12px] font-semibold text-[#227bfc]">
-                                {{ __('admin.storefront_short') }}
-                            </a>
                         </div>
                     </div>
 

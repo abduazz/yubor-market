@@ -18,25 +18,48 @@ class BannerController extends Controller
 
         return view('admin.banners.index', [
             'banners' => $banners,
+            'locales' => Banner::LOCALES,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $localeKeys = array_keys(Banner::LOCALES);
+
         $data = $request->validate([
-            'image_upload' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'image_upload' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'images_upload' => ['nullable', 'array'],
+            'images_upload.*' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
             'url' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        $imagePath = $this->handleUpload($request->file('image_upload'));
+        $imagesByLocale = [];
+        foreach ($localeKeys as $loc) {
+            if ($request->hasFile("images_upload.{$loc}")) {
+                $imagesByLocale[$loc] = $this->handleUpload($request->file("images_upload.{$loc}"), $loc);
+            }
+        }
+
+        if (empty($imagesByLocale) && $request->hasFile('image_upload')) {
+            $imagesByLocale['uz'] = $this->handleUpload($request->file('image_upload'), 'uz');
+        }
+
+        if (empty($imagesByLocale)) {
+            return back()->withErrors([
+                'images_upload' => __('admin.banners.at_least_one_image'),
+            ])->withInput();
+        }
+
+        $primaryImage = $imagesByLocale['uz'] ?? reset($imagesByLocale);
 
         Banner::query()->create([
             'title' => '',
             'subtitle' => '',
             'subtitle_color' => null,
             'gradient' => '',
-            'image' => $imagePath,
+            'image' => $primaryImage,
+            'images_by_locale' => $imagesByLocale,
             'image_class' => 'full',
             'url' => trim((string) ($data['url'] ?? '')) ?: '/',
             'sort_order' => (int) (Banner::query()->max('sort_order') + 1),
@@ -48,22 +71,45 @@ class BannerController extends Controller
 
     public function update(Request $request, Banner $banner): RedirectResponse
     {
+        $localeKeys = array_keys(Banner::LOCALES);
+
         $data = $request->validate([
             'image_upload' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'images_upload' => ['nullable', 'array'],
+            'images_upload.*' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
             'url' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
+        $imagesByLocale = is_array($banner->images_by_locale) ? $banner->images_by_locale : [];
+        if (empty($imagesByLocale) && ! empty($banner->image)) {
+            $imagesByLocale['uz'] = $banner->image;
+        }
+
+        $hasNewUpload = false;
+        foreach ($localeKeys as $loc) {
+            if ($request->hasFile("images_upload.{$loc}")) {
+                $imagesByLocale[$loc] = $this->handleUpload($request->file("images_upload.{$loc}"), $loc);
+                $hasNewUpload = true;
+            }
+        }
+
+        if ($request->hasFile('image_upload')) {
+            $imagesByLocale['uz'] = $this->handleUpload($request->file('image_upload'), 'uz');
+            $hasNewUpload = true;
+        }
+
         $payload = [
             'url' => trim((string) ($data['url'] ?? '')) ?: '/',
+            'images_by_locale' => $imagesByLocale,
         ];
 
         if ($request->has('is_active')) {
             $payload['is_active'] = $request->boolean('is_active');
         }
 
-        if ($request->hasFile('image_upload')) {
-            $payload['image'] = $this->handleUpload($request->file('image_upload'));
+        if ($hasNewUpload) {
+            $payload['image'] = $imagesByLocale['uz'] ?? reset($imagesByLocale) ?: $banner->image;
             $payload['image_class'] = 'full';
             $payload['title'] = '';
             $payload['subtitle'] = '';
@@ -77,7 +123,7 @@ class BannerController extends Controller
 
     public function toggle(Banner $banner): RedirectResponse
     {
-        $banner->update(['is_active' => !$banner->is_active]);
+        $banner->update(['is_active' => ! $banner->is_active]);
 
         return back()->with('success', __('admin.flash.banner_toggled'));
     }
@@ -89,16 +135,16 @@ class BannerController extends Controller
         return back()->with('success', __('admin.flash.banner_deleted'));
     }
 
-    protected function handleUpload(UploadedFile $file): string
+    protected function handleUpload(UploadedFile $file, string $locale = 'uz'): string
     {
         $uploadDir = public_path('img/uploads/banners');
-        if (!is_dir($uploadDir)) {
+        if (! is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        $filename = 'banner-' . time() . '-' . Str::random(6) . '.' . $file->getClientOriginalExtension();
+        $filename = 'banner-'.$locale.'-'.time().'-'.Str::random(6).'.'.$file->getClientOriginalExtension();
         $file->move($uploadDir, $filename);
 
-        return 'img/uploads/banners/' . $filename;
+        return 'img/uploads/banners/'.$filename;
     }
 }

@@ -1,11 +1,4 @@
 <x-admin.layouts.app :heading="__('admin.orders.heading')" :subheading="__('admin.orders.subheading')">
-    <x-slot:actions>
-        <button type="button" onclick="document.getElementById('create-order-modal').classList.remove('hidden')"
-                class="rounded-[12px] bg-[#227bfc] px-[14px] py-[10px] text-[13px] font-semibold text-white transition hover:bg-[#1a68db]">
-            {{ __('admin.orders.create_btn') }}
-        </button>
-    </x-slot:actions>
-
     {{-- Status Tabs --}}
     <div class="flex flex-wrap items-center gap-[8px]">
         <a href="{{ route('admin.orders.index', array_filter(['q' => request('q'), 'region' => request('region')])) }}"
@@ -124,10 +117,6 @@
                                        class="rounded-[10px] bg-[#f1f5f8] px-[12px] py-[6px] text-[12px] font-semibold text-ink hover:bg-[#e2e8f0]">
                                         {{ __('admin.open') }}
                                     </a>
-                                    <a href="{{ route('order', $order->order_number) }}" target="_blank" title="{{ __('admin.open_storefront') }}"
-                                       class="rounded-[10px] bg-[#e8f1fe] px-[10px] py-[6px] text-[12px] font-semibold text-[#227bfc] hover:bg-[#d0e7fd]">
-                                        {{ __('admin.storefront_short') }}
-                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -147,110 +136,5 @@
                 {{ $orders->links() }}
             </div>
         @endif
-    </div>
-
-    {{-- Create Order Modal --}}
-    <div id="create-order-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 p-[16px]">
-        <div class="max-h-[90dvh] w-full max-w-[600px] overflow-y-auto rounded-[24px] bg-white p-[24px] shadow-xl">
-            <div class="mb-[16px] flex items-center justify-between">
-                <h3 class="text-[18px] font-bold text-ink">{{ __('admin.orders.modal_title') }}</h3>
-                <button type="button" onclick="document.getElementById('create-order-modal').classList.add('hidden')"
-                        class="text-[20px] text-[#737373] hover:text-ink">✕</button>
-            </div>
-            <form action="{{ route('admin.orders.store') }}" method="POST" class="flex flex-col gap-[14px]">
-                @csrf
-                <div class="grid grid-cols-1 gap-[12px] sm:grid-cols-2">
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.sender_name') }}</label>
-                        <input type="text" name="sender_name" required placeholder="Alisher Karimov"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.sender_phone') }}</label>
-                        <input type="text" name="sender_phone" required placeholder="+7 900 123 - 45 - 67"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.recipient_name') }}</label>
-                        <input type="text" name="recipient_name" required placeholder="Mohira Karimova"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.recipient_phone') }}</label>
-                        <input type="text" name="recipient_phone" required placeholder="+998 90 123-45-67"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.region_label') }}</label>
-                        <select name="region" required class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                            @foreach ($regions as $r)
-                                <option value="{{ $r }}">{{ $r }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.district_label') }}</label>
-                        <input type="text" name="district" required placeholder="Marg‘ilon shahri"
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.address_label') }}</label>
-                    <input type="text" name="address" required placeholder="Navro‘z mahallasi, Bog‘ ko‘chasi 12-uy"
-                           class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                </div>
-
-                <div class="grid grid-cols-1 gap-[12px] sm:grid-cols-3">
-                    <div class="sm:col-span-2">
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.product_label') }}</label>
-                        <select name="product_id" required class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                            @foreach ($products as $p)
-                                <option value="{{ $p->id }}">{{ $p->title }} — {{ $p->formatted_price }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.qty_label') }}</label>
-                        <input type="number" name="quantity" value="1" min="1" max="50" required
-                               class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-[12px] sm:grid-cols-2">
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.payment_method_label') }}</label>
-                        <select name="payment_method" class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                            <option value="card">{{ __('admin.orders.method_card') }}</option>
-                            <option value="sbp">{{ __('admin.orders.method_sbp') }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.initial_status_label') }}</label>
-                        <select name="status" class="h-[42px] w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] px-[12px] text-[13px]">
-                            @foreach ($statusDefinitions as $sKey => $sDef)
-                                <option value="{{ $sKey }}">{{ $sDef['badge'] }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="mb-[4px] block text-[12px] font-medium text-[#525252]">{{ __('admin.orders.wish_label') }}</label>
-                    <textarea name="wish" rows="2" placeholder="{{ __('admin.orders.wish_placeholder') }}"
-                              class="w-full rounded-[12px] border border-[#dbe4ee] bg-[#f7f7f8] p-[12px] text-[13px]"></textarea>
-                </div>
-
-                <div class="mt-[8px] flex justify-end gap-[10px]">
-                    <button type="button" onclick="document.getElementById('create-order-modal').classList.add('hidden')"
-                            class="rounded-[12px] bg-[#f1f5f8] px-[16px] py-[10px] text-[13px] font-medium text-ink">
-                        {{ __('admin.cancel') }}
-                    </button>
-                    <button type="submit" class="rounded-[12px] bg-[#227bfc] px-[20px] py-[10px] text-[13px] font-semibold text-white">
-                        {{ __('admin.orders.submit_create') }}
-                    </button>
-                </div>
-            </form>
-        </div>
     </div>
 </x-admin.layouts.app>

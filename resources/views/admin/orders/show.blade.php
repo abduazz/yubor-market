@@ -10,10 +10,6 @@
            class="rounded-[12px] bg-[#f1f5f8] px-[14px] py-[10px] text-[13px] font-medium text-ink hover:bg-[#e2e8f0]">
             {{ __('admin.orders.back_to_orders') }}
         </a>
-        <a href="{{ route('order', $order->order_number) }}" target="_blank"
-           class="rounded-[12px] bg-[#e8f1fe] px-[14px] py-[10px] text-[13px] font-semibold text-[#227bfc] hover:bg-[#d0e7fd]">
-            {{ __('admin.orders.open_on_storefront') }}
-        </a>
         <form action="{{ route('admin.orders.destroy', $order) }}" method="POST"
               onsubmit="return confirm('{{ __('admin.orders.confirm_delete', ['number' => $order->order_number]) }}')">
             @csrf

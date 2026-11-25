@@ -1,12 +1,5 @@
 <x-admin.layouts.app :heading="__('admin.dashboard.heading')" :subheading="__('admin.dashboard.subheading')">
     <x-slot:actions>
-        <div class="hidden items-center gap-[8px] rounded-[12px] bg-[#f1f5f8] px-[12px] py-[8px] text-[12px] sm:flex">
-            <span class="text-[#737373]">{{ __('admin.dashboard.rate_card') }}</span>
-            <strong class="text-ink">1 ₽ = {{ $settings['rate_card_uzs'] }} UZS</strong>
-            <span class="text-[#dbe4ee]">|</span>
-            <span class="text-[#737373]">{{ __('admin.dashboard.rate_sbp') }}</span>
-            <strong class="text-[#227bfc]">1 ₽ = {{ $settings['rate_sbp_uzs'] }} UZS</strong>
-        </div>
         <a href="{{ route('admin.products.create') }}"
            class="flex items-center gap-[6px] rounded-[12px] bg-[#227bfc] px-[14px] py-[10px] text-[13px] font-semibold text-white transition hover:bg-[#1a68db]">
             <span>{{ __('admin.dashboard.add_product') }}</span>
@@ -160,10 +153,6 @@
                                         <a href="{{ route('admin.orders.show', $order) }}"
                                            class="rounded-[8px] bg-[#f1f5f8] px-[10px] py-[5px] text-[12px] font-medium text-ink hover:bg-[#e2e8f0]">
                                             {{ __('admin.details') }}
-                                        </a>
-                                        <a href="{{ route('order', $order->order_number) }}" target="_blank" title="{{ __('admin.open_storefront') }}"
-                                           class="rounded-[8px] bg-[#e8f1fe] px-[8px] py-[5px] text-[12px] font-medium text-[#227bfc] hover:bg-[#d0e7fd]">
-                                            ↗
                                         </a>
                                     </div>
                                 </td>

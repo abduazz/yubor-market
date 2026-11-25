@@ -156,13 +156,14 @@ class CatalogService
     public function settings(): array
     {
         $defaults = [
+            'receiving_cards' => '[]',
             'rate_card_uzs' => '158.00',
             'rate_sbp_uzs' => '156.250',
             'gift_wrap_fee_rub' => '190',
             'oversize_fee_rub' => '990',
             'delivery_provider_text' => '2-4 kunda EMU po‘chta orqali',
             'delivery_badge_text' => 'Yetkazish bepul · 2–3 kun (EMU)',
-            'support_chat_url' => '#',
+            'support_chat_url' => 'https://t.me/yubormarket_support',
             'marketplace_phone' => '+998 71 200-00-00',
         ];
 
@@ -173,6 +174,31 @@ class CatalogService
         } catch (\Throwable) {
             return $defaults;
         }
+    }
+
+    public function receivingCards(): array
+    {
+        $settings = $this->settings();
+        $decoded = json_decode((string) ($settings['receiving_cards'] ?? '[]'), true);
+
+        if (is_array($decoded) && count($decoded) > 0) {
+            return array_values($decoded);
+        }
+
+        $legacy = [];
+        foreach (['uzcard_card_number' => 'uzcard_card_holder', 'humo_card_number' => 'humo_card_holder'] as $numKey => $holderKey) {
+            $num = trim((string) ($settings[$numKey] ?? ''));
+            if ($num !== '') {
+                $digits = preg_replace('/\D/', '', $num);
+                $legacy[] = [
+                    'number' => $num,
+                    'holder' => trim((string) ($settings[$holderKey] ?? '')),
+                    'type' => str_starts_with($digits, '9860') ? 'humo' : 'uzcard',
+                ];
+            }
+        }
+
+        return $legacy;
     }
 
     public function findOrderModel(string $orderNumber): ?Order

@@ -60,35 +60,6 @@
                     @endforeach
                 </nav>
             </div>
-
-            <div class="flex flex-col gap-[10px] border-t border-[#eef2f6] pt-[16px]">
-                <a href="{{ route('home') }}" target="_blank"
-                   class="flex items-center justify-between rounded-[12px] bg-[#f1f5f8] px-[12px] py-[10px] text-[13px] font-medium text-ink transition hover:bg-[#e3ebf2]">
-                    <span class="flex items-center gap-[8px]">
-                        <span class="size-[8px] rounded-full bg-[#12b76a]"></span>
-                        <span>{{ __('admin.open_storefront') }}</span>
-                    </span>
-                    <svg class="size-[16px] text-[#737373]" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                    </svg>
-                </a>
-
-                <div class="flex items-center justify-between px-[8px] pt-[4px]">
-                    <div class="min-w-0">
-                        <p class="truncate text-[13px] font-semibold text-ink">{{ auth()->user()?->name ?? 'Admin' }}</p>
-                        <p class="truncate text-[11px] text-[#737373]">{{ auth()->user()?->email }}</p>
-                    </div>
-                    <form action="{{ route('admin.logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" title="{{ __('admin.logout') }}"
-                                class="rounded-[10px] p-[8px] text-[#737373] transition hover:bg-[#fee4e2] hover:text-[#d92d20]">
-                            <svg class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-                            </svg>
-                        </button>
-                    </form>
-                </div>
-            </div>
         </aside>
 
         {{-- Main content --}}
@@ -111,11 +82,6 @@
                                 РУ
                             </a>
                         </div>
-                        <a href="{{ route('home') }}" target="_blank" class="rounded-[10px] bg-[#f1f5f8] px-[10px] py-[6px] text-[12px] font-medium text-ink">{{ __('admin.storefront_short') }}</a>
-                        <form action="{{ route('admin.logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="rounded-[10px] bg-[#fee4e2] px-[10px] py-[6px] text-[12px] font-medium text-[#d92d20]">{{ __('admin.logout') }}</button>
-                        </form>
                     </div>
                 </div>
                 <div class="no-scrollbar mt-[10px] flex gap-[6px] overflow-x-auto pb-[2px]">

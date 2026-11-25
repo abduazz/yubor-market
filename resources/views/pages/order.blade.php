@@ -3,9 +3,9 @@
     $stepDefs = config('catalog.order_steps');
     $current = $status['step']; // 1..4
 
-    $paidSubtext = isset($orderModel) && $orderModel
-        ? ($orderModel->created_at ? $orderModel->created_at->format('d.m · H:i') : '17.11 · 14:20').' · '.($orderModel->card_masked ?: 'MIR •4417')
-        : '17.11 · 14:20 · MIR •4417';
+    $paidSubtext = isset($orderModel) && $orderModel && $orderModel->created_at
+        ? $orderModel->created_at->format('d.m · H:i')
+        : '17.11 · 14:20';
 
     // Timeline:
     // 1-bosqich ("To'landi") to'lov qabul qilingan zahoti bajarilgan (yashil galochka ✓).
@@ -85,6 +85,7 @@
                 <img src="{{ asset('img/icon-back.svg') }}" alt="" class="size-full">
             </a>
             <h1 class="min-w-0 flex-1 text-[18px] leading-normal font-semibold text-ink">Buyurtma #{{ $order['id'] }}</h1>
+            <x-script-switcher />
         </header>
 
         <div class="flex w-full flex-col gap-[12px] px-[16px] pt-[8px]">
@@ -200,7 +201,7 @@
                 Yana sovg‘a yuborish
             </a>
         @endif
-        <a href="{{ $settings['support_chat_url'] ?? '#' }}" class="flex w-full items-center justify-center rounded-[14px] border border-primary px-[20px] py-[16px] text-[16px] leading-[24px] font-medium whitespace-nowrap text-primary">
+        <a href="{{ !empty($settings['support_chat_url']) ? $settings['support_chat_url'] : 'https://t.me/yubormarket_support' }}" target="_blank" rel="noopener noreferrer" class="flex w-full items-center justify-center rounded-[14px] border border-primary px-[20px] py-[16px] text-[16px] leading-[24px] font-medium whitespace-nowrap text-primary">
             Yordam chat
         </a>
     </div>

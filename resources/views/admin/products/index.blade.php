@@ -96,10 +96,6 @@
                             </td>
                             <td class="px-[16px] py-[14px] text-right whitespace-nowrap">
                                 <div class="inline-flex items-center gap-[6px]">
-                                    <a href="{{ route('product', $product->slug) }}" target="_blank" title="{{ __('admin.open_storefront') }}"
-                                       class="rounded-[8px] bg-[#e8f1fe] px-[10px] py-[6px] text-[12px] font-semibold text-[#227bfc] hover:bg-[#d0e7fd]">
-                                        ↗
-                                    </a>
                                     <a href="{{ route('admin.products.edit', $product) }}"
                                        class="rounded-[8px] bg-[#f1f5f8] px-[12px] py-[6px] text-[12px] font-semibold text-ink hover:bg-[#e2e8f0]">
                                         {{ __('admin.edit') }}

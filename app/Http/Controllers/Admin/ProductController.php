@@ -59,6 +59,7 @@ class ProductController extends Controller
             ]),
             'categories' => Category::query()->orderBy('sort_order')->get(),
             'availableImages' => $this->availablePresetImages(),
+            'locales' => Product::LOCALES,
         ]);
     }
 
@@ -77,6 +78,7 @@ class ProductController extends Controller
             'product' => $product,
             'categories' => Category::query()->orderBy('sort_order')->get(),
             'availableImages' => $this->availablePresetImages(),
+            'locales' => Product::LOCALES,
         ]);
     }
 
@@ -108,13 +110,41 @@ class ProductController extends Controller
 
     protected function validateProduct(Request $request, ?Product $product = null): array
     {
-        if (! $request->filled('slug') && $request->filled('title')) {
-            $request->merge(['slug' => Str::slug($request->input('title'))]);
+        $localeKeys = array_keys(Product::LOCALES);
+        $rawTranslations = $request->input('translations', []);
+
+        // Resolve primary title from UZ or first non-empty language or legacy title field
+        $baseTitle = trim((string) ($rawTranslations['uz']['title'] ?? ''));
+        if ($baseTitle === '') {
+            foreach ($localeKeys as $loc) {
+                $candidate = trim((string) ($rawTranslations[$loc]['title'] ?? ''));
+                if ($candidate !== '') {
+                    $baseTitle = $candidate;
+                    break;
+                }
+            }
+        }
+        if ($baseTitle === '') {
+            $baseTitle = trim((string) $request->input('title', ''));
+        }
+
+        if ($baseTitle !== '') {
+            $request->merge(['title' => $baseTitle]);
+        }
+
+        if (! $request->filled('slug') && $baseTitle !== '') {
+            $request->merge(['slug' => Str::slug($baseTitle)]);
         }
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
-            'full_title' => ['nullable', 'string', 'max:200'],
+            'translations' => ['nullable', 'array'],
+            'translations.*.title' => ['nullable', 'string', 'max:160'],
+            'translations.*.full_title' => ['nullable', 'string', 'max:200'],
+            'translations.*.warranty_text' => ['nullable', 'string', 'max:200'],
+            'translations.*.description' => ['nullable', 'string', 'max:3000'],
+            'translations.*.spec_keys' => ['nullable', 'array'],
+            'translations.*.spec_values' => ['nullable', 'array'],
             'slug' => [
                 'required',
                 'string',
@@ -133,14 +163,46 @@ class ProductController extends Controller
             'gallery_uploads' => ['nullable', 'array'],
             'gallery_uploads.*' => ['image', 'max:5120'],
             'images_text' => ['nullable', 'string'],
-            'spec_keys' => ['nullable', 'array'],
-            'spec_values' => ['nullable', 'array'],
             'spec_groups_json' => ['nullable', 'string'],
-            'description' => ['nullable', 'string', 'max:3000'],
-            'warranty_text' => ['nullable', 'string', 'max:200'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
         ]);
+
+        $translations = [];
+        foreach ($localeKeys as $loc) {
+            $locInput = is_array($rawTranslations[$loc] ?? null) ? $rawTranslations[$loc] : [];
+            $locSpecs = [];
+            $sKeys = $locInput['spec_keys'] ?? [];
+            $sVals = $locInput['spec_values'] ?? [];
+            if (is_array($sKeys)) {
+                foreach ($sKeys as $idx => $k) {
+                    $keyStr = trim((string) $k);
+                    $valStr = trim((string) ($sVals[$idx] ?? ''));
+                    if ($keyStr !== '' && $valStr !== '') {
+                        $locSpecs[$keyStr] = $valStr;
+                    }
+                }
+            }
+
+            $translations[$loc] = [
+                'title' => trim((string) ($locInput['title'] ?? '')),
+                'full_title' => trim((string) ($locInput['full_title'] ?? '')),
+                'warranty_text' => trim((string) ($locInput['warranty_text'] ?? '')),
+                'description' => trim((string) ($locInput['description'] ?? '')),
+                'specs' => $locSpecs,
+            ];
+        }
+
+        // Determine primary locale record for top-level columns (prefer uz, then first non-empty)
+        $primaryLoc = $translations['uz'];
+        if ($primaryLoc['title'] === '') {
+            foreach ($localeKeys as $loc) {
+                if ($translations[$loc]['title'] !== '') {
+                    $primaryLoc = $translations[$loc];
+                    break;
+                }
+            }
+        }
 
         $uploadedNewCardImage = false;
         $imagePath = $validated['image'] ?? $product?->image ?? 'img/phone-blue.png';
@@ -162,7 +224,6 @@ class ProductController extends Controller
         if (! empty($uploadedGalleryImages)) {
             $galleryPath = $uploadedGalleryImages[0];
         } elseif ($uploadedNewCardImage) {
-            // When user uploads a new product photo, use it for gallery too unless they explicitly picked a different gallery preset
             $galleryPath = $imagePath;
         } else {
             $galleryPath = ! empty($validated['gallery']) ? $validated['gallery'] : $imagePath;
@@ -179,24 +240,12 @@ class ProductController extends Controller
                     $imagesList[] = $clean;
                 }
             }
-            // If user uploaded a new card photo and images_text still had only the default placeholder, replace it with the uploaded photo
             if ($uploadedNewCardImage && $imagesList === ['img/gallery-a55.png']) {
                 $imagesList = [$imagePath];
             }
         }
         if (empty($imagesList)) {
             $imagesList = [$galleryPath];
-        }
-
-        $specs = [];
-        $keys = $request->input('spec_keys', []);
-        $values = $request->input('spec_values', []);
-        foreach ($keys as $idx => $key) {
-            $k = trim((string) $key);
-            $v = trim((string) ($values[$idx] ?? ''));
-            if ($k !== '' && $v !== '') {
-                $specs[$k] = $v;
-            }
         }
 
         $specGroups = $product?->spec_groups;
@@ -210,8 +259,8 @@ class ProductController extends Controller
         return [
             'category_id' => (int) $validated['category_id'],
             'slug' => Str::slug($validated['slug']),
-            'title' => $validated['title'],
-            'full_title' => $validated['full_title'] ?: $validated['title'],
+            'title' => $primaryLoc['title'] ?: $baseTitle,
+            'full_title' => $primaryLoc['full_title'] ?: ($primaryLoc['title'] ?: $baseTitle),
             'brand' => $validated['brand'],
             'price_rub' => (int) $validated['price_rub'],
             'old_price_rub' => ! empty($validated['old_price_rub']) ? (int) $validated['old_price_rub'] : null,
@@ -219,10 +268,11 @@ class ProductController extends Controller
             'image' => ltrim($imagePath, '/'),
             'gallery' => ltrim($galleryPath, '/'),
             'images' => $imagesList,
-            'specs' => ! empty($specs) ? $specs : null,
+            'specs' => ! empty($primaryLoc['specs']) ? $primaryLoc['specs'] : null,
             'spec_groups' => $specGroups,
-            'description' => $validated['description'] ?? null,
-            'warranty_text' => $validated['warranty_text'] ?: 'Rasmiy kafolat 12 oy · Original mahsulot',
+            'translations' => $translations,
+            'description' => $primaryLoc['description'] ?: null,
+            'warranty_text' => $primaryLoc['warranty_text'] ?: 'Rasmiy kafolat 12 oy · Original mahsulot',
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'is_active' => $request->boolean('is_active'),
         ];

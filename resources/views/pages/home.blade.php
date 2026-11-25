@@ -31,7 +31,7 @@
                         MARKET
                     </span>
                 </a>
-                <span class="size-[28px] shrink-0"></span>
+                <x-script-switcher />
             </nav>
 
             <div class="flex w-full flex-col items-center gap-[16px] px-[16px]">
@@ -73,24 +73,24 @@
              data-status-colors='@json(config('catalog.status_colors'))'
              data-latest-order-id="{{ $latestActiveOrderModel?->order_number ?? '' }}"
              data-server-orders='@json($serverOrders ?? [])'>
-            <a href="{{ route('order', $order['id']) }}" data-order-link class="flex w-full flex-col gap-[10px] overflow-clip rounded-[24px] bg-white p-[16px]">
+            <a href="{{ route('order', $order['id']) }}" data-order-link class="flex w-full flex-col gap-[10px] overflow-clip rounded-[24px] border border-[#b8d3fe] bg-[#e2edff] p-[16px] shadow-[0_4px_16px_rgba(34,123,252,0.08)]">
                 <div class="flex w-full items-center justify-between">
                     <div class="flex flex-col gap-[2px] leading-normal whitespace-nowrap">
                         <p class="text-[15px] font-semibold text-ink" data-order-number>#{{ $order['id'] }}</p>
                         <p class="text-[12px] text-ink-3" data-order-date>{{ $latestActiveOrderModel?->created_at?->format('d.m.Y') ?? '17.11.2026' }}</p>
                     </div>
-                    <span data-order-badge class="rounded-[8px] bg-primary-100 px-[8px] py-[4px] text-[11px] leading-normal font-semibold text-primary">Yetkazilmoqda</span>
+                    <span data-order-badge class="rounded-[8px] border border-white/80 bg-primary-100 px-[8px] py-[4px] text-[11px] leading-normal font-semibold text-primary">Yetkazilmoqda</span>
                 </div>
                 {{-- 4 bosqichli progress: statusga qarab bo'yaladi (JS: initActiveOrder) --}}
                 <div class="flex w-full gap-[4px]" data-order-bars>
                     @for ($i = 0; $i < 4; $i++)
-                        <span class="h-[4px] flex-1 rounded-[2px] bg-line transition-colors duration-300"></span>
+                        <span class="h-[4px] flex-1 rounded-[2px] bg-white/80 transition-colors duration-300"></span>
                     @endfor
                 </div>
                 <div class="flex w-full items-center gap-[8px]">
                     <div class="flex items-center gap-[8px]" data-order-images>
                         @foreach ($order['items'] as $item)
-                            <img src="{{ asset($item['image']) }}" alt="" class="h-[64px] w-[52px] shrink-0 rounded-[12px] bg-[#f8f7f5] object-cover">
+                            <img src="{{ asset($item['image']) }}" alt="" class="h-[64px] w-[52px] shrink-0 rounded-[12px] bg-white object-cover">
                         @endforeach
                     </div>
                     <span class="min-w-0 flex-1"></span>
@@ -99,7 +99,7 @@
                         <p class="text-[16px] font-semibold text-ink" data-order-total>{{ $latestActiveOrderModel?->formatted_total ?? '78 160 ₽' }}</p>
                     </div>
                 </div>
-                <div class="flex w-full items-center gap-[8px] rounded-[12px] bg-page px-[12px] py-[10px]">
+                <div class="flex w-full items-center gap-[8px] rounded-[12px] bg-white px-[12px] py-[10px]">
                     <p class="min-w-0 flex-1 text-[12px] leading-normal font-medium text-ink">Kimga: <span data-order-to>Mohira Karimova · Farg‘ona, Marg‘ilon</span></p>
                     <img src="{{ asset('img/chev-sm.svg') }}" alt="" class="size-[16px]">
                 </div>

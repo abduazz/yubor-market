@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\AdminAuthenticate;
 use App\Http\Middleware\SetAdminLocale;
+use App\Http\Middleware\SetStorefrontScript;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,12 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['admin_locale']);
+        $middleware->encryptCookies(except: ['admin_locale', 'storefront_script']);
         $middleware->alias([
-            'admin.auth' => AdminAuthenticate::class,
             'admin.locale' => SetAdminLocale::class,
+            'storefront.script' => SetStorefrontScript::class,
         ]);
-        $middleware->redirectGuestsTo(fn () => route('admin.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
