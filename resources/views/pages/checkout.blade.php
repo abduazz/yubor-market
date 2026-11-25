@@ -3,23 +3,27 @@
     $districts = $districts ?? config('catalog.districts');
     $deliveryBadgeText = $settings['delivery_badge_text'] ?? 'Yetkazish bepul · 2–3 kun (EMU)';
     $productSlug = $selectedProduct['slug'] ?? request()->query('product');
+    $senderProfile = $senderProfile ?? config('catalog.sender_profile', [
+        'name' => 'Rustam Karimov',
+        'phone' => '926 450 - 18 - 90',
+    ]);
 @endphp
 
 <x-layouts.app title="Buyurtmani rasmiylashtirish — Yubor Market">
     <form id="checkout-form" action="{{ route('checkout.payment', array_filter(['product' => $productSlug])) }}" method="GET" novalidate
           class="flex w-full flex-col gap-[16px] pb-[110px]">
         <input type="hidden" name="product_slug" value="{{ $productSlug }}">
-        <x-nav title="Buyurtmani rasmiylashtirish" :back="url()->previous()" :steps="1" />
+        <x-nav title="Buyurtmani rasmiylashtirish" :back="$backUrl ?? ($productSlug ? route('product', $productSlug) : route('home'))" :steps="1" />
 
         <div class="flex w-full flex-col gap-[16px] px-[16px]">
-            {{-- Yuboruvchi --}}
+            {{-- Yuboruvchi (foydalanuvchi profilidan avto-to'ldiriladi) --}}
             <section class="flex w-full flex-col gap-[16px] overflow-clip rounded-[24px] bg-white p-[16px]">
                 <x-card-title icon="img/icon-user.svg">Siz — yuboruvchi (Rossiya)</x-card-title>
                 <div class="flex w-full flex-col gap-[12px]">
-                    <x-field label="Ismingiz" name="sender_name" placeholder="Yuboruvchi ismi" autocomplete="name"
+                    <x-field label="Ismingiz" name="sender_name" :value="$senderProfile['name'] ?? ''" placeholder="Yuboruvchi ismi" autocomplete="name"
                              required rule="name" maxlength="60" />
                     <x-field label="Telefon raqamingiz" name="sender_phone" type="tel" inputmode="tel"
-                             prefix="+7" placeholder="___ ___ - __ - __" data-mask="ru" required rule="phone-ru" autocomplete="tel" />
+                             prefix="+7" :value="$senderProfile['phone'] ?? ''" placeholder="___ ___ - __ - __" data-mask="ru" required rule="phone-ru" autocomplete="tel" />
                 </div>
             </section>
 

@@ -444,9 +444,16 @@ function initCheckout() {
         closeSheet(districtSheet);
     });
 
-    // Avval kiritilgan qiymatlarni tiklash
+    // Avval kiritilgan qiymatlarni tiklash (yuboruvchi maydonlari foydalanuvchi profilidan avto-to'ldirilган bo'ladi)
     const saved = store.get();
     $$('input:not([type=hidden]), textarea', form).forEach((input) => {
+        if (input.name === 'sender_name' || input.name === 'sender_phone') {
+            const val = input.defaultValue || saved[input.name] || '';
+            if (val) {
+                input.value = input.dataset.mask ? formatPhone(val, input.dataset.mask) : val;
+            }
+            return;
+        }
         if (!saved[input.name]) return;
         input.value = input.dataset.mask ? formatPhone(saved[input.name], input.dataset.mask) : saved[input.name];
         input.dispatchEvent(new Event('input'));
@@ -601,13 +608,36 @@ function initPaymentSummary() {
     if (s.recipient_phone) phone.textContent = s.recipient_phone.replace(/ - /g, '-');
     if (s.region && s.district) {
         $('[data-summary="address"]').textContent = [s.region, s.district.replace(/ (shahri|tumani)$/, ''), s.address].filter(Boolean).join(', ');
-        $('[data-summary="region"]').textContent = s.region;
+        const regEl = $('[data-summary="region"]');
+        if (regEl) regEl.textContent = s.region;
+    }
+    const wishInput = $('[data-wish-input]');
+    if (wishInput) {
+        if (s.wish && !wishInput.value) wishInput.value = s.wish;
+        wishInput.addEventListener('input', () => store.set({ wish: wishInput.value }));
     }
     $$('input[data-checkout-field]').forEach((input) => {
         const key = input.dataset.checkoutField;
-        if (key === 'product_slug' && input.value) return;
+        if ((key === 'product_slug' || key === 'wish') && input.value) return;
         if (s[key]) input.value = s[key];
     });
+
+    const paymentSheet = $('#payment-method-sheet');
+    const paymentForm = $('#payment-form');
+    const methodInput = $('#payment-method-input');
+    if (paymentSheet && paymentForm) {
+        $('[data-open-payment-sheet]')?.addEventListener('click', () => openSheet(paymentSheet));
+        $$('[data-close-payment-sheet]', paymentSheet).forEach((el) =>
+            el.addEventListener('click', () => closeSheet(paymentSheet)));
+        $$('[data-select-payment-method]', paymentSheet).forEach((btn) =>
+            btn.addEventListener('click', () => {
+                if (methodInput) methodInput.value = btn.dataset.selectPaymentMethod;
+                paymentForm.submit();
+            }));
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && paymentSheet.dataset.open === 'true') closeSheet(paymentSheet);
+        });
+    }
 }
 
 /* ---------- Avtomatik yo'naltirish (to'lov tekshirilmoqda) ---------- */
@@ -638,32 +668,56 @@ function initActiveOrder() {
     const statusSection = $('[data-order-status]');
     const pageStatus = statusSection?.dataset.orderStatus;
 
-    // 1) To'lov tasdiqlandi (?success=1) — faol buyurtma "To'landi" holatida yaratiladi
-    if (orderPage && params.get('success') === '1') {
+    // 1) Buyurtma sahifasida: serverdagi haqiqiy status bilan localStorage'ni sinxronlaymiz
+    if (orderPage && (params.get('success') === '1' || pageStatus)) {
         const c = store.get();
+        const existing = activeOrder.get();
+        const currentStatus = pageStatus || 'paid';
         activeOrder.set({
+            ...(existing && existing.id === orderPage[1] ? existing : {}),
             id: orderPage[1],
-            status: 'paid',
-            createdAt: new Date().toISOString(),
-            recipient: statusSection?.dataset.orderRecipient || c.recipient_name || 'Mohira Karimova',
-            region: statusSection?.dataset.orderRegion || c.region || 'Farg‘ona',
-            district: statusSection?.dataset.orderDistrict || c.district || 'Marg‘ilon shahri',
+            status: currentStatus,
+            createdAt: (existing && existing.id === orderPage[1] && existing.createdAt) ? existing.createdAt : new Date().toISOString(),
+            recipient: statusSection?.dataset.orderRecipient || c.recipient_name || existing?.recipient || 'Mohira Karimova',
+            region: statusSection?.dataset.orderRegion || c.region || existing?.region || 'Farg‘ona',
+            district: statusSection?.dataset.orderDistrict || c.district || existing?.district || 'Marg‘ilon shahri',
         });
-    } else if (orderPage && pageStatus) {
-        // 2) Status yangilandi — saqlangan buyurtmani yangilaymiz
-        const order = activeOrder.get();
-        if (order && order.id === orderPage[1]) {
-            activeOrder.set({
-                ...order,
-                status: pageStatus,
-                recipient: statusSection?.dataset.orderRecipient || order.recipient,
-                region: statusSection?.dataset.orderRegion || order.region,
-                district: statusSection?.dataset.orderDistrict || order.district,
-            });
-        }
+
+        // Admin panelda status o'zgarsa, mijozdagi buyurtma sahifasi avtomatik yangilanadi
+        const orderId = orderPage[1];
+        const checkOrderPageStatus = async () => {
+            if (document.hidden) return;
+            try {
+                const res = await fetch(`/orders/${encodeURIComponent(orderId)}/status`, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.found && data.status && data.status !== currentStatus) {
+                    activeOrder.set({
+                        id: data.id,
+                        status: data.status,
+                        createdAt: data.createdAt || new Date().toISOString(),
+                        date: data.date,
+                        recipient: data.recipient,
+                        region: data.region,
+                        district: data.district,
+                        total: data.total,
+                        items_count: data.items_count,
+                        images: data.images,
+                    });
+                    location.replace(`/orders/${encodeURIComponent(orderId)}`);
+                }
+            } catch {}
+        };
+        setInterval(checkOrderPageStatus, 3000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) checkOrderPageStatus();
+        });
     }
 
-    // 3) Bosh sahifa kartasi
+    // 2) Bosh sahifa kartasi
     const card = $('#active-order');
     if (!card) return;
     let statuses = {};
@@ -712,59 +766,83 @@ function initActiveOrder() {
         activeOrder.set(order);
     }
 
-    const status = order && statuses[order.status];
-    // Buyurtma yo'q, topshirilgan yoki bekor qilingan bo'lsa — karta ko'rinmaydi
-    if (!order || !status || !status.active) {
-        card.classList.add('hidden');
-        return;
-    }
-
-    // Buyurtma raqami, rasmlar, soni va summasi
-    const numEl = $('[data-order-number]', card);
-    if (numEl) numEl.textContent = `#${order.id}`;
-
-    const totalEl = $('[data-order-total]', card);
-    if (totalEl && order.total) totalEl.textContent = order.total;
-
-    const countEl = $('[data-order-count]', card);
-    if (countEl && order.items_count) countEl.textContent = `${order.items_count} ta mahsulot`;
-
-    const imagesBox = $('[data-order-images]', card);
-    if (imagesBox && Array.isArray(order.images) && order.images.length > 0) {
-        imagesBox.innerHTML = order.images
-            .map((src) => `<img src="${src}" alt="" class="h-[64px] w-[52px] shrink-0 rounded-[12px] bg-[#f8f7f5] object-cover">`)
-            .join('');
-    }
-
-    // Status nomi va rangi
-    const palette = colors[status.color] || {};
-    const badge = $('[data-order-badge]', card);
-    badge.textContent = status.badge;
-    badge.className = 'rounded-[8px] px-[8px] py-[4px] text-[11px] leading-normal font-semibold whitespace-nowrap';
-    badge.style.background = palette.bg;
-    badge.style.color = palette.text;
-
-    // Progress: bajarilgan bosqichlar status rangida
-    $$('[data-order-bars] > span', card).forEach((bar, i) => {
-        bar.style.background = i < status.step ? palette.accent : '';
-    });
-
-    // Karta bosilganda buyurtma sahifasi ochiladi
-    $('[data-order-link]', card).href = `/orders/${order.id}`;
-
-    if (order.date) {
-        $('[data-order-date]', card).textContent = order.date;
-    } else {
-        const d = new Date(order.createdAt);
-        const pad = (n) => String(n).padStart(2, '0');
-        if (!Number.isNaN(d.getTime())) {
-            $('[data-order-date]', card).textContent = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+    const renderHomeCard = (ord) => {
+        const status = ord && statuses[ord.status];
+        // Buyurtma yo'q yoki topshirilgan bo'lsa — karta ko'rinmaydi
+        if (!ord || !status || !status.active) {
+            card.classList.add('hidden');
+            return;
         }
+
+        const numEl = $('[data-order-number]', card);
+        if (numEl) numEl.textContent = `#${ord.id}`;
+
+        const totalEl = $('[data-order-total]', card);
+        if (totalEl && ord.total) totalEl.textContent = ord.total;
+
+        const countEl = $('[data-order-count]', card);
+        if (countEl && ord.items_count) countEl.textContent = `${ord.items_count} ta mahsulot`;
+
+        const imagesBox = $('[data-order-images]', card);
+        if (imagesBox && Array.isArray(ord.images) && ord.images.length > 0) {
+            imagesBox.innerHTML = ord.images
+                .map((src) => `<img src="${src}" alt="" class="h-[64px] w-[52px] shrink-0 rounded-[12px] bg-[#f8f7f5] object-cover">`)
+                .join('');
+        }
+
+        const palette = colors[status.color] || {};
+        const badge = $('[data-order-badge]', card);
+        badge.textContent = status.badge;
+        badge.className = 'rounded-[8px] px-[8px] py-[4px] text-[11px] leading-normal font-semibold whitespace-nowrap';
+        badge.style.background = palette.bg;
+        badge.style.color = palette.text;
+
+        $$('[data-order-bars] > span', card).forEach((bar, i) => {
+            bar.style.background = i < status.step ? palette.accent : '';
+        });
+
+        $('[data-order-link]', card).href = `/orders/${ord.id}`;
+
+        if (ord.date) {
+            $('[data-order-date]', card).textContent = ord.date;
+        } else {
+            const d = new Date(ord.createdAt);
+            const pad = (n) => String(n).padStart(2, '0');
+            if (!Number.isNaN(d.getTime())) {
+                $('[data-order-date]', card).textContent = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+            }
+        }
+        const name = (ord.recipient || '').replace(/\s*\(.*\)\s*$/, '');
+        const district = (ord.district || '').replace(/ (shahri|tumani)$/, '');
+        $('[data-order-to]', card).textContent = `${name} · ${ord.region}${district ? ', ' + district : ''}`;
+        card.classList.remove('hidden');
+    };
+
+    renderHomeCard(order);
+
+    // Bosh sahifada ham admin panelda status o'zgarsa jonli yangilanadi
+    if (order && order.id) {
+        const pollHomeOrder = async () => {
+            if (document.hidden) return;
+            try {
+                const res = await fetch(`/orders/${encodeURIComponent(order.id)}/status`, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.found) {
+                    order = { ...order, ...data };
+                    activeOrder.set(order);
+                    renderHomeCard(order);
+                }
+            } catch {}
+        };
+        setInterval(pollHomeOrder, 3000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) pollHomeOrder();
+        });
     }
-    const name = (order.recipient || '').replace(/\s*\(.*\)\s*$/, '');
-    const district = (order.district || '').replace(/ (shahri|tumani)$/, '');
-    $('[data-order-to]', card).textContent = `${name} · ${order.region}${district ? ', ' + district : ''}`;
-    card.classList.remove('hidden');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

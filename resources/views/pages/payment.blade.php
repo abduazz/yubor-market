@@ -1,8 +1,5 @@
 @php
-    $rateCard = $settings['rate_card_uzs'] ?? '158.00';
-    $rateSbp = $settings['rate_sbp_uzs'] ?? '156.250';
-    $productSlug = $selectedProduct['slug'] ?? request()->query('product');
-    $giftWrapFee = (int) ($settings['gift_wrap_fee_rub'] ?? 190);
+    $productSlug = $selectedProduct['slug'] ?? request()->query('product') ?? request()->query('product_slug');
     $oversizeFee = (int) ($settings['oversize_fee_rub'] ?? 990);
 
     if (! empty($selectedProduct)) {
@@ -11,21 +8,21 @@
         $itemsCount = 1;
         $itemsTotalRub = (int) ($selectedProduct['price_rub'] ?? preg_replace('/\D/', '', (string) ($selectedProduct['price'] ?? 0)));
         $appliedOversize = ($selectedProduct['category'] ?? '') === 'maishiy-texnika' ? $oversizeFee : 0;
-        $totalRub = $itemsTotalRub + $giftWrapFee + $appliedOversize;
+        $totalRub = $itemsTotalRub + $appliedOversize;
     } else {
         $thumbs = ['img/gallery-a55.png', 'img/thumb-2.png', 'img/thumb-3.png'];
         $extraCount = 1;
         $itemsCount = 4;
         $itemsTotalRub = 76980;
         $appliedOversize = $oversizeFee;
-        $totalRub = 78160;
+        $totalRub = 77970;
     }
 
     $fmtRub = fn (int $amount) => number_format($amount, 0, '.', ' ').' ₽';
 @endphp
 
 <x-layouts.app title="Sovg‘a va to‘lov — Yubor Market">
-    <form action="{{ route('checkout.processing') }}" method="POST" class="flex w-full flex-col gap-[16px] pb-[110px]">
+    <form id="payment-form" action="{{ route('checkout.processing') }}" method="POST" class="flex w-full flex-col gap-[16px] pb-[110px]">
         @csrf
         <input type="hidden" name="product_slug" value="{{ $productSlug }}" data-checkout-field="product_slug">
         <input type="hidden" name="sender_name" data-checkout-field="sender_name">
@@ -37,6 +34,8 @@
         <input type="hidden" name="district" data-checkout-field="district">
         <input type="hidden" name="address" data-checkout-field="address">
         <input type="hidden" name="landmark" data-checkout-field="landmark">
+        <input type="hidden" name="method" id="payment-method-input" value="card">
+
         <x-nav title="Buyurtmani rasmiylashtirish" :back="route('checkout', array_filter(['product' => $productSlug]))" :steps="3" />
 
         <div class="flex w-full flex-col gap-[16px] px-[16px]">
@@ -64,43 +63,9 @@
                 </div>
                 <label class="flex h-[120px] w-full cursor-text flex-col gap-[2px] overflow-clip rounded-[16px] bg-field px-[14px] py-[12px] focus-within:ring-2 focus-within:ring-primary/30">
                     <span class="text-[12px] leading-[16px] text-ink-2">Eng yaxshi tilaklar (kuryer qog‘ozda topshiradi)</span>
-                    <textarea name="wish" placeholder="Yozing" maxlength="300"
+                    <textarea name="wish" data-wish-input placeholder="Yozing" maxlength="300"
                               class="w-full flex-1 resize-none bg-transparent text-[16px] leading-[24px] text-[#444] outline-none placeholder:text-muted"></textarea>
                 </label>
-            </section>
-
-            {{-- O'tkazma usuli --}}
-            <section class="flex w-full flex-col gap-[16px] overflow-clip rounded-[24px] bg-white p-[16px]">
-                <p class="text-[16px] leading-normal font-semibold whitespace-nowrap text-ink">O‘tkazma usulini tanlang</p>
-                <div class="flex w-full flex-col gap-[12px]">
-                    @foreach ([
-                        ['value' => 'card', 'title' => 'Bank kartasi orqali o‘tkazish', 'rate' => '1 RUB = '.$rateCard.' UZS'],
-                        ['value' => 'sbp', 'title' => 'SBP orqali o‘tkazish', 'rate' => '1 RUB = '.$rateSbp.' UZS'],
-                    ] as $i => $method)
-                        <label class="flex w-full cursor-pointer items-center justify-between overflow-clip rounded-[16px] bg-page px-[14px] py-[12px]">
-                            <span class="flex items-center gap-[11px]">
-                                <span class="relative size-[42px] shrink-0 overflow-clip rounded-[10px] bg-white">
-                                    @if ($method['value'] === 'card')
-                                        <img src="{{ asset('img/icon-card.svg') }}" alt="" class="absolute top-[calc(50%+0.5px)] left-1/2 size-[24px] -translate-x-1/2 -translate-y-1/2">
-                                    @else
-                                        <span class="absolute top-1/2 left-1/2 h-[21px] w-[36px] -translate-x-1/2 -translate-y-1/2 overflow-hidden">
-                                            <img src="{{ asset('img/sbp-logo.png') }}" alt="SBP" class="absolute top-[-48.14%] left-[-43.5%] h-[197.71%] w-[185.93%] max-w-none">
-                                        </span>
-                                    @endif
-                                </span>
-                                <span class="flex flex-col gap-[4px] text-[14px] whitespace-nowrap">
-                                    <span class="leading-normal font-medium text-ink">{{ $method['title'] }}</span>
-                                    <span class="flex gap-[6px]">
-                                        <span class="leading-normal text-ink-3">Kurs:</span>
-                                        <span class="leading-[20px] font-medium text-primary">{{ $method['rate'] }}</span>
-                                    </span>
-                                </span>
-                            </span>
-                            <input type="radio" name="method" value="{{ $method['value'] }}" class="peer sr-only" @checked($i === 0)>
-                            <span class="relative size-[20px] shrink-0 rounded-full border-[1.5px] border-[#c8d3df] bg-white peer-checked:border-[6px] peer-checked:border-primary"></span>
-                        </label>
-                    @endforeach
-                </div>
             </section>
 
             {{-- Narx --}}
@@ -123,12 +88,6 @@
                             <span class="text-ink-3">Mahsulotlar ({{ $itemsCount }})</span>
                             <span class="font-medium text-ink">{{ $fmtRub($itemsTotalRub) }}</span>
                         </div>
-                        @if ($giftWrapFee > 0)
-                            <div class="flex w-full items-center justify-between">
-                                <span class="text-ink-3">Sovg‘a qadog‘i</span>
-                                <span class="font-medium text-ink">{{ $fmtRub($giftWrapFee) }}</span>
-                            </div>
-                        @endif
                         @if ($appliedOversize > 0)
                             <div class="flex w-full items-center justify-between">
                                 <span class="text-ink-3">Katta texnika</span>
@@ -155,10 +114,53 @@
                     <span class="text-[12px] text-ink-3">To‘lov summasi</span>
                     <span class="text-[18px] font-semibold text-ink">{{ $fmtRub($totalRub) }}</span>
                 </div>
-                <button type="submit"
+                <button type="button" data-open-payment-sheet
                         class="flex items-center justify-center rounded-[14px] bg-primary px-[20px] py-[12px] text-[16px] leading-[24px] font-medium whitespace-nowrap text-white transition active:scale-[.99]">
                     To‘lovga o‘tish
                 </button>
+            </div>
+        </div>
+
+        {{-- Bottom sheet: O'tkazma usulini tanlang --}}
+        <div class="sheet fixed inset-0 z-50" id="payment-method-sheet" data-open="false" aria-hidden="true">
+            <div class="sheet-overlay absolute inset-0 bg-[rgba(13,20,38,0.45)]" data-close-payment-sheet></div>
+
+            <div role="dialog" aria-modal="true" aria-labelledby="payment-method-sheet-title"
+                 class="sheet-panel absolute bottom-0 left-1/2 flex w-full max-w-[430px] flex-col gap-[16px] overflow-clip rounded-t-[24px] bg-white px-[16px] pt-[10px]"
+                 style="padding-bottom: max(env(safe-area-inset-bottom), 28px)">
+                <div class="flex w-full justify-center">
+                    <span class="h-[5px] w-[36px] rounded-[3px] bg-line"></span>
+                </div>
+
+                <p id="payment-method-sheet-title" class="text-[18px] leading-normal font-semibold whitespace-nowrap text-ink">
+                    O‘tkazma usulini tanlang
+                </p>
+
+                <div class="flex w-full flex-col gap-[10px]">
+                    <button type="button" data-select-payment-method="card"
+                            class="flex w-full items-center justify-between overflow-clip rounded-[16px] bg-page px-[14px] py-[12px] text-left transition active:scale-[.99]">
+                        <span class="flex items-center gap-[12px]">
+                            <span class="relative size-[42px] shrink-0 overflow-clip rounded-[10px] bg-white">
+                                <img src="{{ asset('img/icon-card.svg') }}" alt="" class="absolute top-[calc(50%+0.5px)] left-1/2 size-[24px] -translate-x-1/2 -translate-y-1/2">
+                            </span>
+                            <span class="text-[15px] leading-normal font-medium whitespace-nowrap text-ink">Bank kartasi orqali o‘tkazish</span>
+                        </span>
+                        <img src="{{ asset('img/chev-blue.svg') }}" alt="" class="size-[18px] shrink-0">
+                    </button>
+
+                    <button type="button" data-select-payment-method="sbp"
+                            class="flex w-full items-center justify-between overflow-clip rounded-[16px] bg-page px-[14px] py-[12px] text-left transition active:scale-[.99]">
+                        <span class="flex items-center gap-[12px]">
+                            <span class="relative size-[42px] shrink-0 overflow-clip rounded-[10px] bg-white">
+                                <span class="absolute top-1/2 left-1/2 h-[21px] w-[36px] -translate-x-1/2 -translate-y-1/2 overflow-hidden">
+                                    <img src="{{ asset('img/sbp-logo.png') }}" alt="SBP" class="absolute top-[-48.14%] left-[-43.5%] h-[197.71%] w-[185.93%] max-w-none">
+                                </span>
+                            </span>
+                            <span class="text-[15px] leading-normal font-medium whitespace-nowrap text-ink">SBP orqali o‘tkazish</span>
+                        </span>
+                        <img src="{{ asset('img/chev-blue.svg') }}" alt="" class="size-[18px] shrink-0">
+                    </button>
+                </div>
             </div>
         </div>
     </form>

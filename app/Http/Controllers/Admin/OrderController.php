@@ -43,7 +43,6 @@ class OrderController extends Controller
             'packing' => Order::query()->where('status', 'packing')->count(),
             'shipping' => Order::query()->where('status', 'shipping')->count(),
             'delivered' => Order::query()->where('status', 'delivered')->count(),
-            'cancelled' => Order::query()->where('status', 'cancelled')->count(),
         ];
 
         return view('admin.orders.index', [
@@ -83,7 +82,7 @@ class OrderController extends Controller
             'landmark' => ['nullable', 'string', 'max:200'],
             'wish' => ['nullable', 'string', 'max:500'],
             'payment_method' => ['required', 'in:card,sbp'],
-            'status' => ['required', 'in:paid,packing,shipping,delivered,cancelled'],
+            'status' => ['required', 'in:paid,packing,shipping,delivered'],
             'product_id' => ['required', 'exists:products,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:50'],
         ]);
@@ -92,8 +91,8 @@ class OrderController extends Controller
         $settings = $catalog->settings();
         $qty = (int) $data['quantity'];
         $itemsTotal = $product->price_rub * $qty;
-        $giftWrapFee = (int) ($settings['gift_wrap_fee_rub'] ?? 190);
-        $totalRub = $itemsTotal + $giftWrapFee;
+        $giftWrapFee = 0;
+        $totalRub = $itemsTotal;
 
         do {
             $orderNumber = (string) random_int(483000, 999999);
@@ -144,7 +143,7 @@ class OrderController extends Controller
     public function update(Request $request, Order $order): RedirectResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'in:paid,packing,shipping,delivered,cancelled'],
+            'status' => ['required', 'in:paid,packing,shipping,delivered'],
             'sender_name' => ['required', 'string', 'max:100'],
             'sender_phone' => ['required', 'string', 'max:40'],
             'recipient_name' => ['required', 'string', 'max:100'],
@@ -191,7 +190,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $data = $request->validate([
-            'status' => ['required', 'in:paid,packing,shipping,delivered,cancelled'],
+            'status' => ['required', 'in:paid,packing,shipping,delivered'],
             'courier_name' => ['nullable', 'string', 'max:100'],
         ]);
 

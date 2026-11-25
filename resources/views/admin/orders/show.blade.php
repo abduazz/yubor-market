@@ -248,12 +248,6 @@
                             <span class="font-medium text-ink">{{ number_format($order->oversize_fee_rub, 0, '.', ' ') }} ₽</span>
                         </div>
                     @endif
-                    @if ($order->gift_wrap_fee_rub > 0)
-                        <div class="flex justify-between">
-                            <span class="text-[#737373]">{{ __('admin.orders.gift_wrap_row') }}</span>
-                            <span class="font-medium text-ink">{{ number_format($order->gift_wrap_fee_rub, 0, '.', ' ') }} ₽</span>
-                        </div>
-                    @endif
                     <div class="flex justify-between">
                         <span class="text-[#737373]">{{ __('admin.orders.delivery_row', ['region' => $order->region]) }}</span>
                         <span class="font-medium text-[#12b76a]">{{ $order->delivery_fee_rub > 0 ? number_format($order->delivery_fee_rub, 0, '.', ' ').' ₽' : __('admin.free') }}</span>

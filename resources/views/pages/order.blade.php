@@ -1,20 +1,36 @@
 @php
     $order = $order ?? config('catalog.order');
     $stepDefs = config('catalog.order_steps');
-    $current = $status['step']; // 1..4, bekor qilinganda 0
-    $cancelled = $statusKey === 'cancelled';
+    $current = $status['step']; // 1..4
 
-    // Timeline: bajarilgan (done), hozirgi (current), kutilayotgan (pending) bosqichlar
+    $paidSubtext = isset($orderModel) && $orderModel
+        ? ($orderModel->created_at ? $orderModel->created_at->format('d.m · H:i') : '17.11 · 14:20').' · '.($orderModel->card_masked ?: 'MIR •4417')
+        : '17.11 · 14:20 · MIR •4417';
+
+    // Timeline:
+    // 1-bosqich ("To'landi") to'lov qabul qilingan zahoti bajarilgan (yashil galochka ✓).
+    // Keyingi bosqichlar: $n < $current (yoki 4-bosqich yakunlanganda) -> 'done' (yashil galochka ✓),
+    // $n === $current -> 'current' (ko'k ikonka), $n > $current -> 'pending' (kulrang ikonka).
     $steps = [];
     foreach ($stepDefs as $n => $title) {
-        $state = $cancelled
-            ? ($n === 1 ? 'done' : 'skipped')
-            : ($n < $current || ($n === $current && $n === 4) ? 'done' : ($n === $current ? 'current' : 'pending'));
-        if ($state === 'skipped') continue;
-        $steps[] = ['n' => $n, 'state' => $state, 'title' => $title];
-    }
-    if ($cancelled) {
-        $steps[] = ['n' => 0, 'state' => 'cancelled', 'title' => 'Bekor qilindi'];
+        if ($n === 1 || $n < $current || ($n === $current && $n === 4)) {
+            $state = 'done';
+        } elseif ($n === $current) {
+            $state = 'current';
+        } else {
+            $state = 'pending';
+        }
+
+        if ($n === 4 && $state === 'done') {
+            $title = 'Buyurtma yetkazildi';
+        }
+
+        $steps[] = [
+            'n' => $n,
+            'state' => $state,
+            'title' => $title,
+            'subtitle' => $n === 1 ? $paidSubtext : null,
+        ];
     }
 
     $fmtRub = fn (int $amount) => number_format($amount, 0, '.', ' ').' ₽';
@@ -28,9 +44,6 @@
         }
         if ($orderModel->oversize_fee_rub > 0) {
             $rows[] = ['Katta texnika', $fmtRub($orderModel->oversize_fee_rub), 'text-ink'];
-        }
-        if ($orderModel->gift_wrap_fee_rub > 0) {
-            $rows[] = ['Sovg‘a qadog‘i', $fmtRub($orderModel->gift_wrap_fee_rub), 'text-ink'];
         }
         $rows[] = [
             'Yetkazish',
@@ -48,10 +61,9 @@
             ['Tovarlar', '89 960 ₽', 'text-ink'],
             ['Chegirma', '−13 000 ₽', 'text-success'],
             ['Katta texnika', '990 ₽', 'text-ink'],
-            ['Sovg‘a qadog‘i', '190 ₽', 'text-ink'],
             ['Yetkazish', 'Bepul', 'text-success'],
         ];
-        $totalFormatted = '78 140 ₽';
+        $totalFormatted = '77 950 ₽';
         $recipientLine = 'Mohira Karimova · +998 90 123-45-67';
         $addressLine = 'Farg‘ona, Marg‘ilon, Navro‘z mahallasi, Bog‘ ko‘chasi 12-uy · 15-maktab yonida';
         $wishText = 'Onajon, tug‘ilgan kuningiz bilan! Sog‘ bo‘ling';
@@ -91,47 +103,39 @@
                     </div>
                     <span class="shrink-0 rounded-[8px] px-[8px] py-[4px] text-[12px] leading-normal font-semibold whitespace-nowrap"
                           style="background: {{ $colors['bg'] }}; color: {{ $colors['text'] }}">
-                        {{ $cancelled ? $status['badge'] : $current.' / 4' }}
+                        {{ $current.' / 4' }}
                     </span>
                 </div>
 
                 <ol class="flex w-full flex-col">
                     @foreach ($steps as $step)
-                        <li class="flex w-full items-start gap-[12px]">
+                        <li class="flex w-full items-stretch gap-[12px]">
                             <div class="flex shrink-0 flex-col items-center">
                                 <span @class([
                                     'relative flex size-[32px] shrink-0 items-center justify-center rounded-[16px]',
                                     'bg-success text-white' => $step['state'] === 'done',
-                                    'bg-primary text-white ring-4 ring-primary/15' => $step['state'] === 'current',
-                                    'bg-divider text-[#98a2b3]' => $step['state'] === 'pending',
-                                    'bg-[#f04438] text-white' => $step['state'] === 'cancelled',
+                                    'bg-primary text-white' => $step['state'] === 'current',
+                                    'bg-[#f6f6f6] text-[#a3a3a3]' => $step['state'] === 'pending',
                                 ])>
                                     <x-step-icon :step="$step['n']" :state="$step['state']" />
                                 </span>
                                 @unless ($loop->last)
-                                    <span class="h-[22px] w-[2px] {{ $step['state'] === 'done' ? 'bg-success' : 'bg-line' }}"></span>
+                                    <span class="min-h-[22px] w-[2px] flex-1 {{ $step['state'] === 'done' ? 'bg-success' : 'bg-line' }}"></span>
                                 @endunless
                             </div>
-                            <p @class([
-                                'min-w-0 pt-[7px] text-[14px] leading-normal',
-                                'font-semibold text-ink' => in_array($step['state'], ['done', 'current']),
-                                'text-ink-3' => $step['state'] === 'pending',
-                                'font-semibold text-[#d92d20]' => $step['state'] === 'cancelled',
-                            ])>{{ $step['title'] }}</p>
+                            <div class="flex min-w-0 flex-col justify-center {{ $loop->last ? 'pt-[6px]' : 'pt-[6px] pb-[14px]' }}">
+                                <p @class([
+                                    'text-[14px] leading-normal',
+                                    'font-semibold text-ink' => in_array($step['state'], ['done', 'current']),
+                                    'font-medium text-ink-2' => $step['state'] === 'pending',
+                                ])>{{ $step['title'] }}</p>
+                                @if (!empty($step['subtitle']))
+                                    <p class="mt-[2px] text-[12px] leading-normal text-ink-3">{{ $step['subtitle'] }}</p>
+                                @endif
+                            </div>
                         </li>
                     @endforeach
                 </ol>
-
-                {{-- Holatga mos izoh bloki --}}
-                <div class="flex w-full items-center gap-[10px] rounded-[14px] px-[12px] py-[10px] {{ $noteStyles[$note['type']] }}">
-                    @if ($note['type'] === 'success')
-                        <img src="{{ asset('img/icon-check-big.svg') }}" alt="" class="size-[20px] shrink-0">
-                    @endif
-                    <div class="flex min-w-0 flex-1 flex-col gap-[2px] leading-normal">
-                        <p class="text-[14px] font-medium {{ $note['type'] === 'danger' ? 'text-[#d92d20]' : 'text-ink' }}">{{ $note['title'] }}</p>
-                        <p class="text-[12px] text-ink-3">{{ $note['text'] }}</p>
-                    </div>
-                </div>
             </section>
 
             {{-- Oluvchi --}}
@@ -190,12 +194,12 @@
 
     {{-- Bottom bar --}}
     <div class="bottom-dock flex flex-col gap-[10px] rounded-t-[24px] bg-white px-[16px] pt-[12px] shadow-[0px_-4px_24px_0px_rgba(26,51,102,0.08)]">
-        @unless ($status['active'])
+        @if ($statusKey === 'delivered')
             <a href="{{ route('home') }}"
                class="flex h-[47px] w-full items-center justify-center rounded-[14px] bg-[#267efd] px-[20px] py-[12px] text-[16px] leading-[24px] font-medium text-white">
                 Yana sovg‘a yuborish
             </a>
-        @endunless
+        @endif
         <a href="{{ $settings['support_chat_url'] ?? '#' }}" class="flex w-full items-center justify-center rounded-[14px] border border-primary px-[20px] py-[16px] text-[16px] leading-[24px] font-medium whitespace-nowrap text-primary">
             Yordam chat
         </a>
@@ -221,7 +225,7 @@
                             <p class="w-[280px] max-w-full text-center text-[13px] leading-[18px] text-ink-3">{{ isset($orderModel) && $orderModel ? $orderModel->recipient_name.'ga' : 'Mohira opaga' }} SMS yuborildi. Kuryer yetkazishdan oldin qo‘ng‘iroq qiladi.</p>
                         </div>
                     </div>
-                    <a href="{{ route('order', ['id' => $order['id'], 'status' => 'paid']) }}"
+                    <a href="{{ route('order', ['id' => $order['id']]) }}"
                        class="flex h-[47px] w-full items-center justify-center rounded-[14px] bg-[#267efd] px-[20px] py-[12px] text-[16px] leading-[24px] font-medium text-white">
                         Tushunarli
                     </a>

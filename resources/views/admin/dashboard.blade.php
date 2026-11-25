@@ -66,7 +66,7 @@
             <h2 class="text-[16px] font-bold text-ink">{{ __('admin.dashboard.funnel_title') }}</h2>
             <a href="{{ route('admin.orders.index') }}" class="text-[13px] font-medium text-[#227bfc] hover:underline">{{ __('admin.dashboard.all_orders_link') }}</a>
         </div>
-        <div class="grid grid-cols-2 gap-[12px] sm:grid-cols-5">
+        <div class="grid grid-cols-2 gap-[12px] sm:grid-cols-4">
             @foreach ($statusDefinitions as $key => $def)
                 @php
                     $palette = $statusColors[$def['color']] ?? ['bg' => '#eef2f6', 'text' => '#475467', 'accent' => '#227bfc'];

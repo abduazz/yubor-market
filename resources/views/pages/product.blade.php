@@ -21,7 +21,7 @@
                 @endforeach
             </div>
 
-            <a href="{{ url()->previous() }}" aria-label="Orqaga"
+            <a href="{{ $backUrl ?? route('home') }}" aria-label="Orqaga"
                class="absolute top-[12px] left-[16px] size-[40px] overflow-clip rounded-[20px] bg-[rgba(255,255,255,0.92)]">
                 <img src="{{ asset('img/btn-back.svg') }}" alt="" class="absolute top-[10px] left-[10px] size-[20px]">
             </a>

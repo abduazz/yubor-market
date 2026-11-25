@@ -7,6 +7,12 @@
 
 return [
 
+    // Foydalanuvchi profilidan avtomatik to'ldiriladigan yuboruvchi (Rossiya) ma'lumotlari
+    'sender_profile' => [
+        'name' => 'Rustam Karimov',
+        'phone' => '926 450 - 18 - 90',
+    ],
+
     // demo_count — bosh sahifada bo'limda nechta karta bo'lishi (frontend demo uchun
     // mavjud tovarlar takrorlanadi). Backend ulanganda haqiqiy tovarlar soni ishlatiladi.
     'categories' => [
@@ -293,13 +299,13 @@ return [
      */
     'order_statuses' => [
         'paid' => [
-            'step' => 1, 'badge' => 'To‘landi', 'color' => 'neutral', 'active' => true,
+            'step' => 1, 'badge' => 'To‘landi', 'color' => 'primary', 'active' => true,
             'title' => 'To‘lov qabul qilindi',
             'subtitle' => 'Taxminiy yetkazish: 20 noyabr',
             'note' => ['type' => 'info', 'title' => 'Buyurtma omborga yuborildi', 'text' => 'Yig‘ish boshlanganda SMS orqali xabar beramiz'],
         ],
         'packing' => [
-            'step' => 2, 'badge' => 'Tayyorlanmoqda', 'color' => 'warning', 'active' => true,
+            'step' => 2, 'badge' => 'Tayyorlanmoqda', 'color' => 'primary', 'active' => true,
             'title' => 'Tayyorlanmoqda',
             'subtitle' => 'Taxminiy yetkazish: 20 noyabr',
             'note' => ['type' => 'info', 'title' => 'Tovarlar tekshirilib, qadoqlanmoqda', 'text' => 'Kuryer tayinlanganda ismi va raqamini yuboramiz'],
@@ -311,16 +317,10 @@ return [
             'note' => ['type' => 'courier', 'title' => 'Kuryer: Bekzod', 'text' => 'Yetkazishdan 1 soat oldin qo‘ng‘iroq qiladi'],
         ],
         'delivered' => [
-            'step' => 4, 'badge' => 'Yetkazildi', 'color' => 'success', 'active' => false,
+            'step' => 4, 'badge' => 'Yetkazildi', 'color' => 'success', 'active' => true,
             'title' => 'Buyurtma yetkazildi',
             'subtitle' => '20 noyabr, 14:05 da yetkazildi',
             'note' => ['type' => 'success', 'title' => 'Mohira Karimova qabul qildi', 'text' => 'Imzo bilan topshirildi · 20.11 · 14:05'],
-        ],
-        'cancelled' => [
-            'step' => 0, 'badge' => 'Bekor qilindi', 'color' => 'danger', 'active' => false,
-            'title' => 'Buyurtma bekor qilindi',
-            'subtitle' => '18 noyabr, 11:40',
-            'note' => ['type' => 'danger', 'title' => '78 140 ₽ qaytariladi', 'text' => '1–3 ish kunida to‘lov qilingan kartaga tushadi'],
         ],
     ],
 
@@ -339,7 +339,7 @@ return [
         1 => 'To‘landi',
         2 => 'Tayyorlanmoqda',
         3 => 'Kuryerga topshirildi',
-        4 => 'Buyurtma yetkazildi',
+        4 => 'Topshiriladi',
     ],
 
     'order' => [

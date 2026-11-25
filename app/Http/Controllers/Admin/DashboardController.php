@@ -16,12 +16,11 @@ class DashboardController extends Controller
     public function index(CatalogService $catalog): View
     {
         $orders = Order::query()->with('items')->latest()->get();
-        $nonCancelledOrders = $orders->where('status', '!=', 'cancelled');
 
-        $totalRevenueRub = (int) $nonCancelledOrders->sum('total_rub');
-        $totalRevenueUzs = (int) $nonCancelledOrders->sum(fn (Order $o) => $o->total_uzs);
-        $avgCheckRub = $nonCancelledOrders->count() > 0
-            ? (int) round($totalRevenueRub / $nonCancelledOrders->count())
+        $totalRevenueRub = (int) $orders->sum('total_rub');
+        $totalRevenueUzs = (int) $orders->sum(fn (Order $o) => $o->total_uzs);
+        $avgCheckRub = $orders->count() > 0
+            ? (int) round($totalRevenueRub / $orders->count())
             : 0;
 
         $statusCounts = [
@@ -29,7 +28,6 @@ class DashboardController extends Controller
             'packing' => $orders->where('status', 'packing')->count(),
             'shipping' => $orders->where('status', 'shipping')->count(),
             'delivered' => $orders->where('status', 'delivered')->count(),
-            'cancelled' => $orders->where('status', 'cancelled')->count(),
         ];
 
         $productsCount = Product::query()->count();

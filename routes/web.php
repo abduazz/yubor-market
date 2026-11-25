@@ -26,6 +26,7 @@ Route::get('/product/{slug}/specs', [StorefrontController::class, 'specs'])->nam
 Route::get('/checkout', [StorefrontController::class, 'checkout'])->name('checkout');
 Route::get('/checkout/payment', [StorefrontController::class, 'payment'])->name('checkout.payment');
 Route::match(['get', 'post'], '/checkout/processing', [StorefrontController::class, 'processing'])->name('checkout.processing');
+Route::get('/orders/{id}/status', [StorefrontController::class, 'orderStatus'])->name('order.status');
 Route::get('/orders/{id}', [StorefrontController::class, 'order'])->name('order');
 
 /*
